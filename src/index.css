@@ -2,95 +2,106 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* SeaMed Tracker Design System - Maritime Theme */
+/* All colors in HSL for proper theming */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Maritime Color Palette */
+    --background: 45 33% 97%; /* Warm cream - like aged nautical charts */
+    --foreground: 210 50% 20%; /* Deep navy text */
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 210 50% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 210 50% 20%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Deep Navy (trust, reliability) */
+    --primary: 210 55% 25%;
+    --primary-foreground: 45 33% 97%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Seafoam Teal (calm, maritime) */
+    --secondary: 168 60% 45%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted - Soft gray-blue */
+    --muted: 210 20% 92%;
+    --muted-foreground: 210 25% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - Warm sand */
+    --accent: 35 60% 90%;
+    --accent-foreground: 210 50% 20%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Alert Colors - Calm but visible */
+    --destructive: 12 75% 55%; /* Coral - not alarming red */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --warning: 38 90% 55%; /* Amber - attention needed */
+    --warning-foreground: 210 50% 20%;
 
-    --radius: 0.5rem;
+    --success: 158 65% 40%; /* Sea green - all good */
+    --success-foreground: 0 0% 100%;
 
-    --sidebar-background: 0 0% 98%;
+    /* Borders & Inputs */
+    --border: 210 25% 85%;
+    --input: 210 25% 90%;
+    --ring: 168 60% 45%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --radius: 0.75rem;
 
-    --sidebar-primary: 240 5.9% 10%;
+    /* Custom Maritime Variables */
+    --nav-height: 4rem;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    
+    /* Gradients */
+    --gradient-ocean: linear-gradient(180deg, hsl(210 55% 25%) 0%, hsl(200 60% 35%) 100%);
+    --gradient-sunset: linear-gradient(135deg, hsl(35 80% 60%) 0%, hsl(12 75% 55%) 100%);
+    --gradient-calm: linear-gradient(180deg, hsl(45 33% 97%) 0%, hsl(210 20% 95%) 100%);
 
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(210 50% 20% / 0.1);
+    --shadow-medium: 0 4px 16px -4px hsl(210 50% 20% / 0.15);
+    --shadow-glow: 0 0 20px hsl(168 60% 45% / 0.25);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 210 45% 12%;
+    --foreground: 45 20% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 210 40% 16%;
+    --card-foreground: 45 20% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 210 40% 16%;
+    --popover-foreground: 45 20% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 168 60% 50%;
+    --primary-foreground: 210 45% 12%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 210 40% 25%;
+    --secondary-foreground: 45 20% 95%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 210 35% 20%;
+    --muted-foreground: 210 20% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 210 35% 22%;
+    --accent-foreground: 45 20% 95%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 12 70% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --warning: 38 85% 50%;
+    --warning-foreground: 210 45% 12%;
+
+    --success: 158 60% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --border: 210 30% 25%;
+    --input: 210 30% 22%;
+    --ring: 168 60% 50%;
+
+    --gradient-ocean: linear-gradient(180deg, hsl(210 40% 16%) 0%, hsl(210 45% 22%) 100%);
+    --gradient-calm: linear-gradient(180deg, hsl(210 45% 12%) 0%, hsl(210 40% 16%) 100%);
   }
 }
 
@@ -99,7 +110,140 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground;
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
   }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    min-height: 100dvh;
+  }
+
+  /* High contrast for sun readability */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight text-foreground;
+  }
+}
+
+@layer components {
+  /* Maritime Card Style */
+  .card-maritime {
+    @apply bg-card rounded-xl border border-border;
+    box-shadow: var(--shadow-soft);
+  }
+
+  /* Touch-friendly button base */
+  .btn-touch {
+    @apply min-h-[48px] min-w-[48px] px-6 py-3;
+    @apply rounded-xl font-medium;
+    @apply transition-all duration-200 ease-out;
+    @apply active:scale-[0.98];
+  }
+
+  /* Status badges */
+  .badge-status {
+    @apply inline-flex items-center gap-1.5 px-3 py-1;
+    @apply rounded-full text-sm font-medium;
+  }
+
+  .badge-ok {
+    @apply bg-success/15 text-success;
+  }
+
+  .badge-warning {
+    @apply bg-warning/15 text-warning;
+  }
+
+  .badge-critical {
+    @apply bg-destructive/15 text-destructive;
+  }
+
+  /* Floating action button */
+  .fab {
+    @apply fixed bottom-24 right-6 z-40;
+    @apply h-14 w-14 rounded-full;
+    @apply bg-secondary text-secondary-foreground;
+    @apply shadow-lg;
+    @apply flex items-center justify-center;
+    @apply transition-transform duration-200;
+    @apply active:scale-95;
+  }
+
+  /* Bottom navigation */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 z-50;
+    @apply bg-card/95 backdrop-blur-md;
+    @apply border-t border-border;
+    padding-bottom: var(--safe-bottom);
+  }
+
+  /* Scan overlay */
+  .scan-overlay {
+    @apply fixed inset-0 z-50 bg-black/90;
+  }
+
+  /* Wave animation */
+  @keyframes wave {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  .animate-wave {
+    animation: wave 2s ease-in-out infinite;
+  }
+
+  /* Gentle pulse for alerts */
+  @keyframes gentle-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  .animate-gentle-pulse {
+    animation: gentle-pulse 3s ease-in-out infinite;
+  }
+
+  /* Slide up animation */
+  @keyframes slide-up {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+  }
+}
+
+/* Namespace for embedded mode - prevents CSS collisions */
+.seamed-tracker {
+  all: initial;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.seamed-tracker * {
+  box-sizing: border-box;
+}
+
+/* PWA install prompt styling */
+.pwa-install-prompt {
+  @apply fixed bottom-20 left-4 right-4 z-50;
+  @apply bg-card rounded-xl p-4;
+  @apply shadow-lg border border-border;
+  @apply animate-slide-up;
+}
+
+/* Safe area padding for mobile */
+.safe-bottom {
+  padding-bottom: max(1rem, var(--safe-bottom));
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
