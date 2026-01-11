@@ -23,10 +23,11 @@ const navItems = [
 
 export function AppShell() {
   const location = useLocation();
-  const { stats } = useInventory();
+  const { stats, isLoading } = useInventory();
 
   // Calculate if there are alerts to show badge
-  const hasAlerts = stats.lowStockCount > 0 || stats.expiringSoonCount > 0 || stats.expiredCount > 0;
+  const hasAlerts = !isLoading && (stats.lowStockCount > 0 || stats.expiringSoonCount > 0 || stats.expiredCount > 0);
+  const alertCount = stats.lowStockCount + stats.expiringSoonCount + stats.expiredCount;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -40,7 +41,7 @@ export function AppShell() {
           {hasAlerts && (
             <div className="flex items-center gap-1 text-sm bg-primary-foreground/20 px-3 py-1 rounded-full">
               <span className="h-2 w-2 rounded-full bg-warning animate-gentle-pulse" />
-              <span>{stats.lowStockCount + stats.expiringSoonCount + stats.expiredCount} alerts</span>
+              <span>{alertCount} alert{alertCount !== 1 ? 's' : ''}</span>
             </div>
           )}
         </div>
