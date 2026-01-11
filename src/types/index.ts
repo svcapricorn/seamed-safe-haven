@@ -10,6 +10,8 @@ export type ItemCategory =
   | 'tools'
   | 'emergency'
   | 'hygiene'
+  | 'diagnostic'
+  | 'ppe'
   | 'other';
 
 export type ItemStatus = 'ok' | 'low-stock' | 'expiring-soon' | 'expired' | 'critical';
@@ -111,6 +113,8 @@ export const CATEGORY_INFO: Record<ItemCategory, { label: string; icon: string; 
   'tools': { label: 'Medical Tools', icon: 'Stethoscope', color: 'text-primary' },
   'emergency': { label: 'Emergency', icon: 'AlertTriangle', color: 'text-warning' },
   'hygiene': { label: 'Hygiene', icon: 'Droplets', color: 'text-success' },
+  'diagnostic': { label: 'Diagnostic', icon: 'Activity', color: 'text-info' },
+  'ppe': { label: 'PPE', icon: 'Shield', color: 'text-accent' },
   'other': { label: 'Other', icon: 'Package', color: 'text-muted-foreground' },
 };
 

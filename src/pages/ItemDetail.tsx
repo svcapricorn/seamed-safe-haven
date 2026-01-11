@@ -2,20 +2,23 @@
 // View and edit individual items
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { useInventory } from '@/context/InventoryContext';
 import { ItemForm } from '@/components/inventory/ItemForm';
 import { BarcodeScanner } from '@/components/scanner/BarcodeScanner';
+import { ObjectScanner, ObjectScanResult } from '@/components/scanner/ObjectScanner';
 import { Button } from '@/components/ui/button';
 
 export default function ItemDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getItemById, isLoading } = useInventory();
-  const [showScanner, setShowScanner] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [showObjectScanner, setShowObjectScanner] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState<string | undefined>();
+  const [identifiedObject, setIdentifiedObject] = useState<ObjectScanResult | null>(null);
 
   const item = id ? getItemById(id) : undefined;
 
@@ -25,9 +28,14 @@ export default function ItemDetailPage() {
     }
   }, [item, isLoading, id, navigate]);
 
-  const handleScan = (barcode: string) => {
+  const handleBarcodeScan = (barcode: string) => {
     setScannedBarcode(barcode);
-    setShowScanner(false);
+    setShowBarcodeScanner(false);
+  };
+
+  const handleObjectIdentify = (result: ObjectScanResult) => {
+    setIdentifiedObject(result);
+    setShowObjectScanner(false);
   };
 
   if (isLoading) {
@@ -69,15 +77,23 @@ export default function ItemDetailPage() {
 
         <ItemForm
           existingItem={item}
-          onScanRequest={() => setShowScanner(true)}
+          onScanBarcodeRequest={() => setShowBarcodeScanner(true)}
+          onScanObjectRequest={() => setShowObjectScanner(true)}
           scannedBarcode={scannedBarcode}
+          identifiedObject={identifiedObject}
         />
       </motion.div>
 
       <BarcodeScanner
-        isOpen={showScanner}
-        onClose={() => setShowScanner(false)}
-        onScan={handleScan}
+        isOpen={showBarcodeScanner}
+        onClose={() => setShowBarcodeScanner(false)}
+        onScan={handleBarcodeScan}
+      />
+
+      <ObjectScanner
+        isOpen={showObjectScanner}
+        onClose={() => setShowObjectScanner(false)}
+        onIdentify={handleObjectIdentify}
       />
     </div>
   );

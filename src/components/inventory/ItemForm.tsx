@@ -13,7 +13,9 @@ import {
   Scan,
   Save,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Camera,
+  QrCode
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useInventory } from '@/context/InventoryContext';
@@ -30,14 +32,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from '@/hooks/use-toast';
+import { ObjectScanResult } from '@/components/scanner/ObjectScanner';
 
 interface ItemFormProps {
   existingItem?: InventoryItem;
-  onScanRequest?: () => void;
+  onScanBarcodeRequest?: () => void;
+  onScanObjectRequest?: () => void;
   scannedBarcode?: string;
+  identifiedObject?: ObjectScanResult | null;
 }
 
-export function ItemForm({ existingItem, onScanRequest, scannedBarcode }: ItemFormProps) {
+export function ItemForm({ existingItem, onScanBarcodeRequest, onScanObjectRequest, scannedBarcode, identifiedObject }: ItemFormProps) {
   const navigate = useNavigate();
   const { addItem, updateItem, deleteItem } = useInventory();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,6 +67,21 @@ export function ItemForm({ existingItem, onScanRequest, scannedBarcode }: ItemFo
       setFormData(prev => ({ ...prev, barcode: scannedBarcode }));
     }
   }, [scannedBarcode]);
+
+  // Update form when object is identified
+  useEffect(() => {
+    if (identifiedObject) {
+      setFormData(prev => ({
+        ...prev,
+        name: identifiedObject.name,
+        category: identifiedObject.category,
+      }));
+      toast({
+        title: 'Item identified',
+        description: `Recognized as "${identifiedObject.name}" (${Math.round(identifiedObject.confidence * 100)}% confidence)`,
+      });
+    }
+  }, [identifiedObject]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -170,17 +190,34 @@ export function ItemForm({ existingItem, onScanRequest, scannedBarcode }: ItemFo
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      {/* Barcode Scan Button */}
-      <div className="card-maritime p-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onScanRequest}
-          className="w-full h-14 border-dashed border-2"
-        >
-          <Scan className="h-5 w-5 mr-2" />
-          {formData.barcode ? `Barcode: ${formData.barcode}` : 'Scan Barcode (Optional)'}
-        </Button>
+      {/* Scan Options */}
+      <div className="card-maritime p-4 space-y-3">
+        <p className="text-sm text-muted-foreground font-medium">Quick Add Options</p>
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onScanObjectRequest}
+            className="h-16 flex-col gap-1 border-dashed border-2"
+          >
+            <Camera className="h-5 w-5" />
+            <span className="text-xs">Identify Item</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onScanBarcodeRequest}
+            className="h-16 flex-col gap-1 border-dashed border-2"
+          >
+            <QrCode className="h-5 w-5" />
+            <span className="text-xs">Scan Barcode</span>
+          </Button>
+        </div>
+        {formData.barcode && (
+          <p className="text-xs text-muted-foreground text-center">
+            Barcode: {formData.barcode}
+          </p>
+        )}
       </div>
 
       {/* Main Form */}
