@@ -10,7 +10,9 @@ import {
   Stethoscope, 
   AlertTriangle, 
   Droplets,
-  Package 
+  Package,
+  Activity,
+  Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useInventory } from '@/context/InventoryContext';
@@ -22,6 +24,8 @@ const categoryIcons: Record<ItemCategory, React.ReactNode> = {
   'tools': <Stethoscope className="h-5 w-5" />,
   'emergency': <AlertTriangle className="h-5 w-5" />,
   'hygiene': <Droplets className="h-5 w-5" />,
+  'diagnostic': <Activity className="h-5 w-5" />,
+  'ppe': <Shield className="h-5 w-5" />,
   'other': <Package className="h-5 w-5" />,
 };
 

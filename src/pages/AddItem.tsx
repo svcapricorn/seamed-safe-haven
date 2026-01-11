@@ -4,14 +4,22 @@
 import React, { useState } from 'react';
 import { ItemForm } from '@/components/inventory/ItemForm';
 import { BarcodeScanner } from '@/components/scanner/BarcodeScanner';
+import { ObjectScanner, ObjectScanResult } from '@/components/scanner/ObjectScanner';
 
 export default function AddItemPage() {
-  const [showScanner, setShowScanner] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [showObjectScanner, setShowObjectScanner] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState<string | undefined>();
+  const [identifiedObject, setIdentifiedObject] = useState<ObjectScanResult | null>(null);
 
-  const handleScan = (barcode: string) => {
+  const handleBarcodeScan = (barcode: string) => {
     setScannedBarcode(barcode);
-    setShowScanner(false);
+    setShowBarcodeScanner(false);
+  };
+
+  const handleObjectIdentify = (result: ObjectScanResult) => {
+    setIdentifiedObject(result);
+    setShowObjectScanner(false);
   };
 
   return (
@@ -24,14 +32,22 @@ export default function AddItemPage() {
       </div>
 
       <ItemForm
-        onScanRequest={() => setShowScanner(true)}
+        onScanBarcodeRequest={() => setShowBarcodeScanner(true)}
+        onScanObjectRequest={() => setShowObjectScanner(true)}
         scannedBarcode={scannedBarcode}
+        identifiedObject={identifiedObject}
       />
 
       <BarcodeScanner
-        isOpen={showScanner}
-        onClose={() => setShowScanner(false)}
-        onScan={handleScan}
+        isOpen={showBarcodeScanner}
+        onClose={() => setShowBarcodeScanner(false)}
+        onScan={handleBarcodeScan}
+      />
+
+      <ObjectScanner
+        isOpen={showObjectScanner}
+        onClose={() => setShowObjectScanner(false)}
+        onIdentify={handleObjectIdentify}
       />
     </div>
   );

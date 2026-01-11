@@ -96,6 +96,8 @@ export function InventoryProvider({ children, embeddedConfig }: InventoryProvide
       'tools': 0,
       'emergency': 0,
       'hygiene': 0,
+      'diagnostic': 0,
+      'ppe': 0,
       'other': 0,
     };
 
