@@ -14,19 +14,26 @@ import {
   Activity,
   Shield
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useInventory } from '@/context/InventoryContext';
 import { CATEGORY_INFO, ItemCategory } from '@/types';
+import { 
+    Grid, 
+    Paper, 
+    Typography, 
+    Stack, 
+    Box, 
+    Button 
+} from '@mui/material';
 
 const categoryIcons: Record<ItemCategory, React.ReactNode> = {
-  'first-aid': <Cross className="h-5 w-5" />,
-  'medications': <Pill className="h-5 w-5" />,
-  'tools': <Stethoscope className="h-5 w-5" />,
-  'emergency': <AlertTriangle className="h-5 w-5" />,
-  'hygiene': <Droplets className="h-5 w-5" />,
-  'diagnostic': <Activity className="h-5 w-5" />,
-  'ppe': <Shield className="h-5 w-5" />,
-  'other': <Package className="h-5 w-5" />,
+  'first-aid': <Cross size={20} />,
+  'medications': <Pill size={20} />,
+  'tools': <Stethoscope size={20} />,
+  'emergency': <AlertTriangle size={20} />,
+  'hygiene': <Droplets size={20} />,
+  'diagnostic': <Activity size={20} />,
+  'ppe': <Shield size={20} />,
+  'other': <Package size={20} />,
 };
 
 export function QuickStats() {
@@ -41,51 +48,64 @@ export function QuickStats() {
     .sort((a, b) => b[1] - a[1]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-foreground">By Category</h2>
-        <Link 
-          to="/inventory" 
-          className="text-sm text-secondary hover:underline"
-        >
+    <Stack spacing={2}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Typography variant="h6">By Category</Typography>
+        <Button component={Link} to="/inventory" size="small" color="secondary">
           View all
-        </Link>
-      </div>
+        </Button>
+      </Stack>
 
-      <div className="grid grid-cols-2 gap-3">
+      <Grid container spacing={2}>
         {activeCategories.map(([category, count], index) => (
-          <motion.div
-            key={category}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-          >
-            <Link
-              to={`/inventory?category=${category}`}
-              className={cn(
-                'card-maritime p-4 flex items-center gap-3',
-                'hover:shadow-medium transition-shadow'
-              )}
+          <Grid item xs={6} key={category}>
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
             >
-              <div className={cn(
-                'flex items-center justify-center w-10 h-10 rounded-lg',
-                'bg-primary/10',
-                CATEGORY_INFO[category as ItemCategory].color
-              )}>
-                {categoryIcons[category as ItemCategory]}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">
-                  {CATEGORY_INFO[category as ItemCategory].label}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {count} item{count !== 1 ? 's' : ''}
-                </p>
-              </div>
-            </Link>
-          </motion.div>
+                <Paper 
+                    component={Link}
+                    to={`/inventory?category=${category}`}
+                    sx={{ 
+                        p: 2, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 2, 
+                        textDecoration: 'none', 
+                        color: 'inherit',
+                        position: 'relative',
+                        '&:hover': { bgcolor: 'action.hover' },
+                        height: '100%'
+                    }}
+                    variant="outlined"
+                >
+                    <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center', 
+                        width: 40, 
+                        height: 40, 
+                        bgcolor: 'primary.light', 
+                        color: 'primary.contrastText',
+                        borderRadius: 1,
+                        opacity: 0.8
+                    }}>
+                        {categoryIcons[category as ItemCategory]}
+                    </Box>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                         <Typography variant="body2" fontWeight="bold" noWrap>
+                             {CATEGORY_INFO[category as ItemCategory].label}
+                         </Typography>
+                         <Typography variant="caption" color="text.secondary">
+                             {count} item{count !== 1 ? 's' : ''}
+                         </Typography>
+                    </Box>
+                </Paper>
+            </motion.div>
+          </Grid>
         ))}
-      </div>
-    </div>
+      </Grid>
+    </Stack>
   );
 }

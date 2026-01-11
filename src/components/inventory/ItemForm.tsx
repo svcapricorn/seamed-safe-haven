@@ -15,22 +15,28 @@ import {
   Trash2,
   AlertCircle,
   Camera,
-  QrCode
+  QrCode,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useInventory } from '@/context/InventoryContext';
 import { CATEGORY_INFO, LOCATION_INFO, ItemCategory, StorageLocation, InventoryItem } from '@/types';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { 
+  TextField, 
+  Button, 
+  MenuItem, 
+  Paper, 
+  Typography,
+  InputAdornment,
+  Grid,
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  CircularProgress
+} from '@mui/material';
 import { toast } from '@/hooks/use-toast';
 import { ObjectScanResult } from '@/components/scanner/ObjectScanner';
 
@@ -46,8 +52,10 @@ export function ItemForm({ existingItem, onScanBarcodeRequest, onScanObjectReque
   const navigate = useNavigate();
   const { addItem, updateItem, deleteItem } = useInventory();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLookingUp, setIsLookingUp] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // ... (rest of the component logic remains similar, just the render changes)
   const [formData, setFormData] = useState({
     name: existingItem?.name || '',
     category: existingItem?.category || 'first-aid' as ItemCategory,
@@ -61,10 +69,36 @@ export function ItemForm({ existingItem, onScanBarcodeRequest, onScanObjectReque
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Update barcode when scanned
+  // Update barcode when scanned and lookup product
   useEffect(() => {
     if (scannedBarcode) {
       setFormData(prev => ({ ...prev, barcode: scannedBarcode }));
+      
+      const fetchProductData = async () => {
+        setIsLookingUp(true);
+        try {
+          // OpenFoodFacts API (Free, no key required)
+          const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${scannedBarcode}.json`);
+          const data = await response.json();
+          
+          if (data.status === 1 && data.product) {
+            const productName = data.product.product_name || data.product.generic_name;
+            if (productName) {
+               setFormData(prev => ({ ...prev, name: productName }));
+               toast({
+                 title: "Product Found",
+                 description: `Identified as: ${productName}`,
+               });
+            }
+          }
+        } catch (error) {
+          console.error("Barcode lookup failed", error);
+        } finally {
+          setIsLookingUp(false);
+        }
+      };
+      
+      fetchProductData();
     }
   }, [scannedBarcode]);
 
@@ -184,234 +218,202 @@ export function ItemForm({ existingItem, onScanBarcodeRequest, onScanObjectReque
   };
 
   return (
-    <motion.form
-      onSubmit={handleSubmit}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
+    <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       {/* Scan Options */}
-      <div className="card-maritime p-4 space-y-3">
-        <p className="text-sm text-muted-foreground font-medium">Quick Add Options</p>
-        <div className="grid grid-cols-2 gap-3">
+      <Paper variant="outlined" sx={{ p: 2 }}>
+        <Typography variant="subtitle2" color="text.secondary" gutterBottom>Quick Add Options</Typography>
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
           <Button
-            type="button"
-            variant="outline"
+            variant="outlined"
             onClick={onScanObjectRequest}
-            className="h-16 flex-col gap-1 border-dashed border-2"
+            sx={{ height: 64, flexDirection: 'column', gap: 1 }}
           >
-            <Camera className="h-5 w-5" />
-            <span className="text-xs">Identify Item</span>
+            <Camera size={20} />
+            <Typography variant="caption">Identify Item</Typography>
           </Button>
           <Button
-            type="button"
-            variant="outline"
+            variant="outlined"
             onClick={onScanBarcodeRequest}
-            className="h-16 flex-col gap-1 border-dashed border-2"
+            sx={{ height: 64, flexDirection: 'column', gap: 1 }}
           >
-            <QrCode className="h-5 w-5" />
-            <span className="text-xs">Scan Barcode</span>
+            <QrCode size={20} />
+            <Typography variant="caption">Scan Barcode</Typography>
           </Button>
-        </div>
+        </Box>
         {formData.barcode && (
-          <p className="text-xs text-muted-foreground text-center">
+           <Typography variant="caption" color="text.secondary" align="center" display="block" sx={{ mt: 1 }}>
             Barcode: {formData.barcode}
-          </p>
+           </Typography>
         )}
-      </div>
+      </Paper>
 
       {/* Main Form */}
-      <div className="card-maritime p-4 space-y-4">
+      <Paper variant="outlined" sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* Name */}
-        <div className="space-y-2">
-          <Label htmlFor="name" className="flex items-center gap-2">
-            <Package className="h-4 w-4" />
-            Item Name *
-          </Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="e.g., Bandages, Ibuprofen, Thermometer"
-            className={cn('h-12', errors.name && 'border-destructive')}
-          />
-          {errors.name && (
-            <p className="text-xs text-destructive flex items-center gap-1">
-              <AlertCircle className="h-3 w-3" />
-              {errors.name}
-            </p>
-          )}
-        </div>
+        <TextField
+          id="name"
+          label="Item Name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          placeholder="e.g., Bandages, Ibuprofen"
+          fullWidth
+          required
+          error={!!errors.name}
+          helperText={errors.name}
+          InputProps={{
+             startAdornment: <InputAdornment position="start"><Package size={18} /></InputAdornment>,
+             endAdornment: isLookingUp ? <InputAdornment position="end"><CircularProgress size={18} /></InputAdornment> : null
+          }}
+        />
 
         {/* Category */}
-        <div className="space-y-2">
-          <Label htmlFor="category">Category</Label>
-          <Select
-            value={formData.category}
-            onValueChange={(value) => setFormData({ ...formData, category: value as ItemCategory })}
-          >
-            <SelectTrigger className="h-12">
-              <SelectValue placeholder="Select category" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(CATEGORY_INFO).map(([key, info]) => (
-                <SelectItem key={key} value={key}>
-                  {info.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <TextField
+          select
+          label="Category"
+          value={formData.category}
+          onChange={(e) => setFormData({ ...formData, category: e.target.value as ItemCategory })}
+          fullWidth
+        >
+          {Object.entries(CATEGORY_INFO).map(([key, info]) => (
+            <MenuItem key={key} value={key}>
+              {info.label}
+            </MenuItem>
+          ))}
+        </TextField>
 
         {/* Quantity Row */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="quantity" className="flex items-center gap-2">
-              <Hash className="h-4 w-4" />
-              Quantity
-            </Label>
-            <Input
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <TextField
               id="quantity"
+              label="Quantity"
               type="number"
-              min="0"
               value={formData.quantity}
               onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-              className={cn('h-12', errors.quantity && 'border-destructive')}
+              error={!!errors.quantity}
+              helperText={errors.quantity}
+              InputProps={{
+                 startAdornment: <InputAdornment position="start"><Hash size={18} /></InputAdornment>,
+              }}
             />
-            {errors.quantity && (
-              <p className="text-xs text-destructive">{errors.quantity}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="minQuantity">Min. Stock</Label>
-            <Input
+            <TextField
               id="minQuantity"
+              label="Min. Stock"
               type="number"
-              min="0"
               value={formData.minQuantity}
               onChange={(e) => setFormData({ ...formData, minQuantity: e.target.value })}
-              className={cn('h-12', errors.minQuantity && 'border-destructive')}
+              error={!!errors.minQuantity}
+              helperText={errors.minQuantity}
             />
-            {errors.minQuantity && (
-              <p className="text-xs text-destructive">{errors.minQuantity}</p>
-            )}
-          </div>
-        </div>
+        </Box>
 
         {/* Expiration Date */}
-        <div className="space-y-2">
-          <Label htmlFor="expirationDate" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Expiration Date
-          </Label>
-          <Input
+        <TextField
             id="expirationDate"
+            label="Expiration Date"
             type="date"
+            fullWidth
             value={formData.expirationDate}
             onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
-            className={cn('h-12', errors.expirationDate && 'border-destructive')}
-          />
-          {errors.expirationDate && (
-            <p className="text-xs text-destructive">{errors.expirationDate}</p>
-          )}
-        </div>
+            error={!!errors.expirationDate}
+            helperText={errors.expirationDate}
+            InputLabelProps={{ shrink: true }}
+            InputProps={{
+                 startAdornment: <InputAdornment position="start"><Calendar size={18} /></InputAdornment>,
+            }}
+        />
 
         {/* Location */}
-        <div className="space-y-2">
-          <Label htmlFor="location" className="flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            Storage Location
-          </Label>
-          <Select
-            value={formData.location}
-            onValueChange={(value) => setFormData({ ...formData, location: value as StorageLocation })}
-          >
-            <SelectTrigger className="h-12">
-              <SelectValue placeholder="Select location" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(LOCATION_INFO).map(([key, info]) => (
-                <SelectItem key={key} value={key}>
-                  {info.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <TextField
+          select
+          label="Storage Location"
+          value={formData.location}
+          onChange={(e) => setFormData({ ...formData, location: e.target.value as StorageLocation })}
+          fullWidth
+          InputProps={{
+             startAdornment: <InputAdornment position="start"><MapPin size={18} /></InputAdornment>,
+          }}
+        >
+          {Object.entries(LOCATION_INFO).map(([key, info]) => (
+            <MenuItem key={key} value={key}>
+              {info.label}
+            </MenuItem>
+          ))}
+        </TextField>
 
         {/* Notes */}
-        <div className="space-y-2">
-          <Label htmlFor="notes" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Notes (Optional)
-          </Label>
-          <Textarea
+        <TextField
             id="notes"
+            label="Notes (Optional)"
+            multiline
+            rows={3}
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            placeholder="Any additional notes..."
-            rows={3}
-          />
-        </div>
-      </div>
+            fullWidth
+             InputProps={{
+                 startAdornment: <InputAdornment position="start" sx={{alignSelf: 'flex-start', mt: 1}}><FileText size={18} /></InputAdornment>,
+            }}
+        />
+      </Paper>
 
       {/* Actions */}
-      <div className="flex gap-3">
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => navigate(-1)}
+            fullWidth
+            disabled={isSubmitting}
+            sx={{ height: 48 }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            color="secondary"
+            fullWidth
+            disabled={isSubmitting}
+            startIcon={<Save />}
+            sx={{ height: 48 }}
+          >
+            {isSubmitting ? 'Saving...' : existingItem ? 'Update Item' : 'Add Item'}
+          </Button>
+        </Box>
+
         {existingItem && (
           <Button
-            type="button"
-            variant="outline"
+            variant="text"
+            color="error"
             onClick={() => setShowDeleteConfirm(true)}
-            className="flex-1 h-12 text-destructive hover:text-destructive hover:bg-destructive/10"
+            fullWidth
+            startIcon={<Trash2 />}
             disabled={isSubmitting}
           >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Remove
+            Remove Item
           </Button>
         )}
-        <Button
-          type="submit"
-          className="flex-1 h-12 bg-secondary text-secondary-foreground hover:bg-secondary/90"
-          disabled={isSubmitting}
-        >
-          <Save className="h-4 w-4 mr-2" />
-          {isSubmitting ? 'Saving...' : existingItem ? 'Update Item' : 'Add Item'}
-        </Button>
-      </div>
+      </Box>
 
       {/* Delete Confirmation Dialog */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="card-maritime p-6 max-w-sm w-full space-y-4"
-          >
-            <h3 className="font-semibold text-lg">Remove this item?</h3>
-            <p className="text-muted-foreground">
-              "{existingItem?.name}" will be permanently removed from your inventory.
-            </p>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setShowDeleteConfirm(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                className="flex-1"
-                onClick={handleDelete}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Removing...' : 'Remove'}
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </motion.form>
+      <Dialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+      >
+        <DialogTitle>Remove this item?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            "{existingItem?.name}" will be permanently removed from your inventory.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowDeleteConfirm(false)} color="inherit">
+            Cancel
+          </Button>
+          <Button onClick={handleDelete} color="error" autoFocus disabled={isSubmitting}>
+            {isSubmitting ? 'Removing...' : 'Remove'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }

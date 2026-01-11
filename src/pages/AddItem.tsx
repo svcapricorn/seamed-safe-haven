@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { ItemForm } from '@/components/inventory/ItemForm';
 import { BarcodeScanner } from '@/components/scanner/BarcodeScanner';
 import { ObjectScanner, ObjectScanResult } from '@/components/scanner/ObjectScanner';
+import { Box, Typography } from '@mui/material';
 
 export default function AddItemPage() {
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
@@ -23,13 +24,13 @@ export default function AddItemPage() {
   };
 
   return (
-    <div className="container py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Add Item</h1>
-        <p className="text-muted-foreground text-sm mt-1">
+    <Box sx={{ py: 3 }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h5" fontWeight="bold">Add Item</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           Add a new item to your medical kit
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
       <ItemForm
         onScanBarcodeRequest={() => setShowBarcodeScanner(true)}
@@ -49,6 +50,6 @@ export default function AddItemPage() {
         onClose={() => setShowObjectScanner(false)}
         onIdentify={handleObjectIdentify}
       />
-    </div>
+    </Box>
   );
 }

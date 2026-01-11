@@ -9,18 +9,14 @@ import { useInventory } from '@/context/InventoryContext';
 import { StatusCard } from '@/components/dashboard/StatusCard';
 import { AlertsList } from '@/components/dashboard/AlertsList';
 import { QuickStats } from '@/components/dashboard/QuickStats';
-import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
+import { Button, Stack, Typography, Box, Skeleton } from '@mui/material';
 
 export default function Dashboard() {
   const { items, exportToCSV, isLoading } = useInventory();
 
   const handleExport = () => {
     if (items.length === 0) {
-      toast({
-        title: 'No items to export',
-        description: 'Add some items to your inventory first.',
-      });
+      alert('No items to export. Add some items to your inventory first.');
       return;
     }
 
@@ -35,87 +31,100 @@ export default function Dashboard() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    toast({
-      title: 'Export complete',
-      description: 'Your inventory has been exported to CSV.',
-    });
+    alert('Export complete. Your inventory has been exported to CSV.');
   };
 
   if (isLoading) {
     return (
-      <div className="container py-6 space-y-6">
-        <div className="h-40 bg-muted rounded-xl animate-pulse" />
-        <div className="h-32 bg-muted rounded-xl animate-pulse" />
-        <div className="h-48 bg-muted rounded-xl animate-pulse" />
-      </div>
+      <Stack spacing={2} sx={{ py: 3 }}>
+        <Skeleton variant="rectangular" height={160} sx={{ borderRadius: 2 }} />
+        <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 2 }} />
+        <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
+      </Stack>
     );
   }
 
   return (
-    <div className="container py-6 space-y-6">
+    <Stack spacing={3} sx={{ py: 3 }}>
       {/* Status Overview */}
       <StatusCard />
 
       {/* Quick Actions */}
-      <div className="flex gap-3">
-        <Link to="/add" className="flex-1">
-          <Button className="w-full h-12 bg-secondary text-secondary-foreground hover:bg-secondary/90">
-            <Plus className="h-5 w-5 mr-2" />
-            Add Item
-          </Button>
-        </Link>
+      <Stack direction="row" spacing={2}>
+        <Button 
+          component={Link} 
+          to="/add" 
+          variant="contained" 
+          color="secondary" 
+          fullWidth
+          size="large"
+          startIcon={<Plus />}
+        >
+          Add Item
+        </Button>
         <Button
-          variant="outline"
-          className="h-12 px-4"
+          variant="outlined"
+          size="large"
           onClick={handleExport}
           disabled={items.length === 0}
+          sx={{ minWidth: 64 }}
         >
-          <Download className="h-5 w-5" />
+          <Download />
         </Button>
-      </div>
+      </Stack>
 
       {/* Alerts Section */}
-      <section>
-        <h2 className="font-semibold text-foreground mb-3">Alerts</h2>
+      <Box>
+        <Typography variant="h6" gutterBottom>Alerts</Typography>
         <AlertsList />
-      </section>
+      </Box>
 
       {/* Category Stats */}
-      <section>
+      <Box>
         <QuickStats />
-      </section>
+      </Box>
 
       {/* Regulatory Templates Link */}
       {items.length > 0 && (
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+        <motion.div
+           initial={{ opacity: 0, y: 20 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ delay: 0.3 }}
         >
-          <Link
+          <Box 
+            component={Link} 
             to="/templates"
-            className="card-maritime p-4 flex items-center gap-4 hover:shadow-medium transition-shadow"
+            sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 2, 
+                p: 2, 
+                bgcolor: 'background.paper', 
+                borderRadius: 2, 
+                boxShadow: 1,
+                textDecoration: 'none',
+                color: 'inherit',
+                '&:hover': { boxShadow: 3, bgcolor: 'action.hover' }
+            }}
           >
-            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-accent">
-              <FileText className="h-6 w-6 text-foreground" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-medium">Regulatory Templates</h3>
-              <p className="text-sm text-muted-foreground">
-                Compare with USCG, RYA, and WHO guidelines
-              </p>
-            </div>
-          </Link>
-        </motion.section>
+            <Box sx={{ p: 1, bgcolor: 'action.selected', borderRadius: 1, display: 'flex' }}>
+              <FileText size={24} />
+            </Box>
+            <Box>
+               <Typography variant="subtitle1" fontWeight="bold">Regulatory Templates</Typography>
+               <Typography variant="body2" color="text.secondary">Compare with USCG, RYA, and WHO guidelines</Typography>
+            </Box>
+          </Box>
+        </motion.div>
       )}
-
+      
       {/* Disclaimer */}
-      <div className="text-center py-4">
-        <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+      <Box sx={{ textAlign: 'center', py: 2, maxWidth: 400, mx: 'auto' }}>
+        <Typography variant="caption" color="text.secondary">
           SeaMed Tracker is an organizational tool only. It does not provide medical advice, 
           diagnosis, or treatment recommendations.
-        </p>
-      </div>
-    </div>
+        </Typography>
+      </Box>
+    </Stack>
   );
 }

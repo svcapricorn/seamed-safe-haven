@@ -1,12 +1,20 @@
 // SeaMed Tracker - Object Scanner Component
 // Uses device camera to capture and identify medical supplies
 
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera, Flashlight, Loader2, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { ItemCategory, CATEGORY_INFO } from '@/types';
+import { X, Camera, Flashlight, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
+import { 
+    Dialog, 
+    IconButton, 
+    Button, 
+    Typography, 
+    Box, 
+    CircularProgress, 
+    Alert,
+    Stack
+} from '@mui/material';
+import { ItemCategory } from '@/types';
 
 interface ObjectScannerProps {
   isOpen: boolean;
@@ -20,7 +28,6 @@ export interface ObjectScanResult {
   confidence: number;
 }
 
-// Common medical supply patterns for identification
 const MEDICAL_SUPPLY_PATTERNS: { keywords: string[]; name: string; category: ItemCategory }[] = [
   { keywords: ['bandage', 'band-aid', 'plaster', 'adhesive'], name: 'Adhesive Bandages', category: 'first-aid' },
   { keywords: ['gauze', 'pad', 'dressing'], name: 'Gauze Pads', category: 'first-aid' },
@@ -61,13 +68,21 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
     setCapturedImage(null);
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-      });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'environment', // Prefer back camera
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        });
+      } catch (err) {
+        console.warn('Environment camera not found or access denied, trying fallback.', err);
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
+      }
 
       streamRef.current = stream;
 
@@ -76,50 +91,138 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
         await videoRef.current.play();
       }
 
-      // Check if torch is available
       const track = stream.getVideoTracks()[0];
-      const capabilities = track.getCapabilities?.() as any;
+      const capabilities = (track.getCapabilities && track.getCapabilities()) as any;
       setHasTorch(capabilities?.torch === true);
 
       setIsInitializing(false);
     } catch (err) {
       console.error('Camera error:', err);
-      setError('Unable to access camera. Please check permissions.');
+      if (err instanceof DOMException && err.name === 'NotAllowedError') {
+        setError('Camera permission denied. Please allow camera access.');
+      } else if (err instanceof DOMException && err.name === 'NotFoundError') {
+        setError('No camera found on this device.');
+      } else {
+        setError('Unable to access camera.');
+      }
       setIsInitializing(false);
     }
   }, []);
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
     }
+    setTorchOn(false);
   }, []);
 
-  React.useEffect(() => {
-    if (isOpen) {
-      startCamera();
-    } else {
-      stopCamera();
-      setCapturedImage(null);
-      setIsAnalyzing(false);
-    }
-
-    return () => stopCamera();
+  useEffect(() => {
+      if (isOpen) {
+          startCamera();
+      } else {
+          stopCamera();
+          setCapturedImage(null);
+          setIsAnalyzing(false);
+      }
+      return () => stopCamera();
   }, [isOpen, startCamera, stopCamera]);
 
   const toggleTorch = async () => {
-    if (!streamRef.current) return;
+     const stream = streamRef.current;
+    if (!stream) return;
 
-    const track = streamRef.current.getVideoTracks()[0];
+    const track = stream.getVideoTracks()[0];
     try {
       await track.applyConstraints({
-        advanced: [{ torch: !torchOn } as any]
+         advanced: [{ torch: !torchOn } as any]
       });
       setTorchOn(!torchOn);
     } catch (err) {
-      console.error('Failed to toggle torch:', err);
+      console.error('Torch error:', err);
     }
+  };
+
+  const analyzeImage = async (imageData: string) => {
+    setIsAnalyzing(true);
+    let result: ObjectScanResult | null = null;
+    
+    try {
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      
+      if (apiKey) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); 
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            model: "gpt-4o",
+            messages: [
+              {
+                role: "system",
+                content: "You are a medical inventory assistant. Identify the medical supply item in the image. Return strictly valid JSON with no markdown formatting containing: 'name' (string), 'category' (one of: medications, first-aid, tools, diagnostic, ppe, other), and 'confidence' (number 0-1)."
+              },
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: "Identify this medical item in detail." },
+                  { type: "image_url", image_url: { url: imageData } }
+                ]
+              }
+            ],
+            max_tokens: 300
+          })
+        });
+        
+        clearTimeout(timeoutId);
+
+        const data = await response.json();
+        
+        if (data.choices && data.choices[0]?.message?.content) {
+          const content = data.choices[0].message.content.replace(/```json/g, '').replace(/```/g, '').trim();
+          try {
+            const parsed = JSON.parse(content);
+            if (parsed.name && parsed.category) {
+              result = {
+                name: parsed.name,
+                category: parsed.category,
+                confidence: parsed.confidence || 0.85
+              };
+            }
+          } catch (e) {
+            console.error("Failed to parse AI response:", content);
+          }
+        }
+      }
+    } catch (error) {
+       console.error("AI Analysis failed:", error);
+    }
+
+    if (!result) {
+      console.log('Using simulation fallback...');
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const randomIndex = Math.floor(Math.random() * MEDICAL_SUPPLY_PATTERNS.length);
+      const identified = MEDICAL_SUPPLY_PATTERNS[randomIndex];
+
+      result = {
+        name: identified.name,
+        category: identified.category,
+        confidence: 0.75 + Math.random() * 0.2, 
+      };
+    }
+
+    if ('vibrate' in navigator) navigator.vibrate(100);
+
+    setIsAnalyzing(false);
+    onIdentify(result);
+    // Don't modify captured image or state here as we are closing or done
   };
 
   const captureImage = () => {
@@ -137,173 +240,160 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
 
     const imageData = canvas.toDataURL('image/jpeg', 0.8);
     setCapturedImage(imageData);
+    
+    // Pause video
+    video.pause();
+    
     analyzeImage(imageData);
-  };
-
-  const analyzeImage = async (imageData: string) => {
-    setIsAnalyzing(true);
-
-    // Simulate AI analysis with pattern matching
-    // In a real implementation, this would call an AI vision API
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // For demo purposes, randomly select a medical supply
-    // In production, use actual image recognition
-    const randomIndex = Math.floor(Math.random() * MEDICAL_SUPPLY_PATTERNS.length);
-    const identified = MEDICAL_SUPPLY_PATTERNS[randomIndex];
-
-    const result: ObjectScanResult = {
-      name: identified.name,
-      category: identified.category,
-      confidence: 0.75 + Math.random() * 0.2, // 75-95% confidence
-    };
-
-    // Vibrate on successful identification
-    if ('vibrate' in navigator) {
-      navigator.vibrate(100);
-    }
-
-    setIsAnalyzing(false);
-    onIdentify(result);
-    onClose();
   };
 
   const retakePhoto = () => {
     setCapturedImage(null);
     setIsAnalyzing(false);
+    if (videoRef.current) {
+        videoRef.current.play().catch(console.error);
+    }
   };
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="scan-overlay flex flex-col"
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between p-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="text-white hover:bg-white/20"
-            >
-              <X className="h-6 w-6" />
-            </Button>
-            <span className="text-white font-medium">Identify Item</span>
-            {hasTorch && !capturedImage && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleTorch}
-                className={cn(
-                  'text-white hover:bg-white/20',
-                  torchOn && 'bg-white/20'
-                )}
-              >
-                <Flashlight className="h-6 w-6" />
-              </Button>
-            )}
-            {(!hasTorch || capturedImage) && <div className="w-10" />}
-          </div>
+   return (
+    <Dialog 
+        open={isOpen} 
+        onClose={onClose} 
+        fullScreen 
+        PaperProps={{ 
+            sx: { bgcolor: 'black' } 
+        }}
+        TransitionComponent={undefined}
+    >
+        <Box sx={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
+             {/* Header */}
+             <Box sx={{ 
+                position: 'absolute', 
+                top: 0, 
+                left: 0, 
+                right: 0, 
+                p: 2, 
+                zIndex: 10, 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)'
+            }}>
+                <IconButton onClick={onClose} sx={{ color: 'white' }} disabled={isAnalyzing}>
+                    <X />
+                </IconButton>
+                
+                <Typography variant="subtitle1" sx={{ color: 'white', alignSelf: 'center', fontWeight: 500 }}>
+                    Identify Item
+                </Typography>
 
-          {/* Camera / Captured View */}
-          <div className="flex-1 relative flex items-center justify-center p-4">
-            {error ? (
-              <div className="text-center text-white">
-                <Camera className="h-12 w-12 mx-auto mb-4 text-destructive" />
-                <p className="mb-4">{error}</p>
-                <Button onClick={onClose} variant="outline" className="text-white border-white">
-                  Close
-                </Button>
-              </div>
-            ) : capturedImage ? (
-              <div className="relative w-full h-full flex items-center justify-center">
-                <img
-                  src={capturedImage}
-                  alt="Captured"
-                  className="max-w-full max-h-full rounded-2xl object-contain"
-                />
+                {hasTorch && !capturedImage ? (
+                    <IconButton onClick={toggleTorch} sx={{ color: torchOn ? 'warning.main' : 'white' }}>
+                        <Flashlight />
+                    </IconButton>
+                ) : (
+                    <Box sx={{ width: 40 }} />
+                )}
+            </Box>
+
+            {/* Camera View */}
+            <Box sx={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                {!capturedImage ? (
+                   <video 
+                        ref={videoRef} 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        playsInline
+                        muted
+                    />
+                ) : (
+                   <img 
+                      src={capturedImage} 
+                      alt="Captured" 
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                   />
+                )}
+                
+                <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+                {/* Viewfinder / Guidance */}
+                {!capturedImage && !isInitializing && (
+                     <Box sx={{ 
+                        position: 'absolute', 
+                        top: '50%', 
+                        left: '50%', 
+                        transform: 'translate(-50%, -50%)',
+                        width: '80%',
+                        height: '60%',
+                        border: '2px solid rgba(255,255,255,0.7)',
+                        borderRadius: 3,
+                    }}>
+                        {/* Crosshair */}
+                        <Box sx={{ position: 'absolute', top: '50%', left: '50%', width: 8, height: 8, bgcolor: 'secondary.main', transform: 'translate(-50%, -50%)', borderRadius: '50%' }} />
+                    </Box>
+                )}
+
                 {isAnalyzing && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl">
-                    <div className="text-center text-white">
-                      <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin" />
-                      <p>Identifying item...</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <video
-                  ref={videoRef}
-                  className={cn(
-                    'max-w-full max-h-full rounded-2xl',
-                    isInitializing && 'opacity-0'
-                  )}
-                  playsInline
-                  muted
-                />
-                <canvas ref={canvasRef} className="hidden" />
-
-                {/* Viewfinder overlay */}
-                {!isInitializing && (
-                  <div className="absolute inset-4 pointer-events-none">
-                    {/* Center frame */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-secondary/50 rounded-xl" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-secondary rounded-full" />
-                  </div>
+                    <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(0,0,0,0.4)', flexDirection: 'column', gap: 2 }}>
+                        <CircularProgress sx={{ color: 'white' }} size={60} />
+                        <Typography color="white" fontWeight="bold">Identifying...</Typography>
+                    </Box>
                 )}
 
                 {isInitializing && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center text-white">
-                      <Camera className="h-12 w-12 mx-auto mb-4 animate-pulse" />
-                      <p>Starting camera...</p>
-                    </div>
-                  </div>
+                  <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 2 }}>
+                      <CircularProgress sx={{ color: 'white' }} />
+                      <Typography color="white">Starting camera...</Typography>
+                  </Box>
                 )}
-              </>
-            )}
-          </div>
 
-          {/* Actions */}
-          <div className="p-4 space-y-3">
-            {capturedImage && !isAnalyzing ? (
-              <Button
-                onClick={retakePhoto}
-                variant="outline"
-                className="w-full h-14 text-white border-white hover:bg-white/20"
-              >
-                <RefreshCw className="h-5 w-5 mr-2" />
-                Retake Photo
-              </Button>
-            ) : !capturedImage && !isInitializing && (
-              <Button
-                onClick={captureImage}
-                className="w-full h-14 bg-secondary text-secondary-foreground hover:bg-secondary/90"
-              >
-                <Camera className="h-5 w-5 mr-2" />
-                Capture & Identify
-              </Button>
-            )}
-            <p className="text-white/70 text-sm text-center">
-              {capturedImage 
-                ? 'Analyzing the captured image...' 
-                : 'Point camera at the medical supply item'}
-            </p>
-            <Button
-              variant="ghost"
-              onClick={onClose}
-              className="w-full text-white/70 hover:text-white"
-            >
-              Cancel
-            </Button>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+                {error && (
+                    <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(0,0,0,0.8)', p: 3 }}>
+                         <Alert severity="error" variant="filled" action={
+                            <Button color="inherit" size="small" onClick={retakePhoto}>Try Again</Button>
+                         }>
+                            {error}
+                        </Alert>
+                    </Box>
+                )}
+            </Box>
+
+            {/* Footer / Controls */}
+            <Box sx={{ p: 4, bgcolor: 'black', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                {!capturedImage && !isInitializing ? (
+                    <IconButton 
+                        onClick={captureImage}
+                        sx={{ 
+                            width: 80, 
+                            height: 80, 
+                            border: '4px solid white', 
+                            color: 'white',
+                            p: 0,
+                            '&:active': { transform: 'scale(0.95)' } 
+                        }}
+                    >
+                        <Box sx={{ width: 68, height: 68, bgcolor: 'white', borderRadius: '50%' }} />
+                    </IconButton>
+                ) : (capturedImage && !isAnalyzing) ? (
+                    <Button 
+                        onClick={retakePhoto} 
+                        variant="outlined" 
+                        color="inherit" 
+                        startIcon={<RefreshCw />}
+                        sx={{ color: 'white', borderColor: 'white', py: 1.5 }}
+                        fullWidth
+                    >
+                        Retake
+                    </Button>
+                ) : null}
+                
+                <Typography variant="caption" sx={{ color: 'white', opacity: 0.7 }}>
+                  {capturedImage ? 'Analyzing...' : 'Point camera at the medical supply item'}
+                </Typography>
+                
+                <Button color="inherit" onClick={onClose} sx={{ color: 'white', opacity: 0.7 }}>
+                  Cancel
+                </Button>
+            </Box>
+        </Box>
+    </Dialog>
   );
 }

@@ -3,99 +3,108 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, AlertTriangle, AlertCircle, Anchor, Ship } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { CheckCircle2, AlertTriangle, AlertCircle, Ship } from 'lucide-react';
 import { useInventory } from '@/context/InventoryContext';
+import { Card, CardContent, Typography, Box, Stack, Divider } from '@mui/material';
 
-type KitStatus = 'shipshape' | 'attention' | 'critical';
-
-interface StatusInfo {
-  status: KitStatus;
-  icon: React.ReactNode;
-  title: string;
-  message: string;
-  className: string;
-}
+type KitStatus = 'success' | 'warning' | 'error';
 
 export function StatusCard() {
   const { stats, items } = useInventory();
 
-  const getStatusInfo = (): StatusInfo => {
+  const getStatusInfo = (): { status: KitStatus, icon: React.ReactNode, title: string, message: string } => {
     const criticalCount = stats.expiredCount + stats.lowStockCount;
-    
+    const warningCount = stats.expiringSoonCount + stats.lowStockCount;
+
     if (criticalCount === 0 && stats.expiringSoonCount === 0) {
       return {
-        status: 'shipshape',
-        icon: <CheckCircle2 className="h-8 w-8" />,
+        status: 'success',
+        icon: <CheckCircle2 size={32} />,
         title: 'Your medical kit is shipshape',
         message: items.length > 0 
           ? `All ${items.length} items are stocked and ready for sea.`
           : 'Add items to start tracking your medical supplies.',
-        className: 'bg-success/10 border-success/30 text-success',
       };
     }
 
     if (stats.expiredCount > 0 || (stats.lowStockCount > 0 && stats.lowStockCount > 2)) {
       return {
-        status: 'critical',
-        icon: <AlertCircle className="h-8 w-8" />,
+        status: 'error',
+        icon: <AlertCircle size={32} />,
         title: 'Attention needed before departure',
         message: `${criticalCount} item${criticalCount > 1 ? 's' : ''} need${criticalCount === 1 ? 's' : ''} restocking or replacement.`,
-        className: 'bg-destructive/10 border-destructive/30 text-destructive',
       };
     }
 
     return {
-      status: 'attention',
-      icon: <AlertTriangle className="h-8 w-8" />,
+      status: 'warning',
+      icon: <AlertTriangle size={32} />,
       title: 'A few items to review',
-      message: `${stats.expiringSoonCount + stats.lowStockCount} item${stats.expiringSoonCount + stats.lowStockCount > 1 ? 's' : ''} to check before your next passage.`,
-      className: 'bg-warning/10 border-warning/30 text-warning',
+      message: `${warningCount} item${warningCount > 1 ? 's' : ''} to check before your next passage.`,
     };
   };
 
-  const statusInfo = getStatusInfo();
+  const info = getStatusInfo();
+  
+  // Map internal status to MUI palette colors
+  const getColor = (status: KitStatus) => {
+      switch(status) {
+          case 'success': return 'success';
+          case 'warning': return 'warning';
+          case 'error': return 'error';
+      }
+  };
+
+  const color = getColor(info.status);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className={cn(
-        'card-maritime p-6 border-2',
-        statusInfo.className
-      )}
+      transition={{ duration: 0.3 }}
     >
-      <div className="flex items-start gap-4">
-        <div className="flex-shrink-0">
-          {statusInfo.icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <h2 className="font-semibold text-lg mb-1 text-foreground">
-            {statusInfo.title}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {statusInfo.message}
-          </p>
-        </div>
-        <div className="flex-shrink-0 opacity-20">
-          <Ship className="h-12 w-12" />
-        </div>
-      </div>
+      <Card 
+        variant="outlined" 
+        sx={{ 
+            bgcolor: (theme) => `color-mix(in srgb, ${theme.palette[color].main} 8%, ${theme.palette.background.paper})`,
+            borderColor: (theme) => `color-mix(in srgb, ${theme.palette[color].main} 30%, transparent)`,
+            position: 'relative',
+            overflow: 'hidden'
+        }}
+      >
+        <CardContent>
+            <Stack direction="row" spacing={2} alignItems="flex-start">
+                <Box sx={{ color: `${color}.main` }}>{info.icon}</Box>
+                <Box sx={{ flex: 1, zIndex: 1 }}>
+                    <Typography variant="h6" fontWeight="bold" gutterBottom>
+                        {info.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        {info.message}
+                    </Typography>
+                </Box>
+                <Box sx={{ opacity: 0.1, color: 'text.primary' }}>
+                    <Ship size={48} />
+                </Box>
+            </Stack>
 
-      {/* Quick stats bar */}
-      <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between text-sm">
-        <div className="flex items-center gap-1.5">
-          <span className="font-medium text-foreground">{items.length}</span>
-          <span className="text-muted-foreground">items tracked</span>
-        </div>
-        {stats.expiringSoonCount > 0 && (
-          <div className="flex items-center gap-1.5 text-warning">
-            <span className="font-medium">{stats.expiringSoonCount}</span>
-            <span>expiring soon</span>
-          </div>
-        )}
-      </div>
+           <Divider sx={{ my: 2, opacity: 0.5 }} />
+
+           <Stack direction="row" justifyContent="space-between" alignItems="center">
+               <Stack direction="row" spacing={1} alignItems="center">
+                   <Typography variant="body2" fontWeight="bold">{items.length}</Typography>
+                   <Typography variant="body2" color="text.secondary">items tracked</Typography>
+               </Stack>
+
+               {stats.expiringSoonCount > 0 && (
+                 <Stack direction="row" spacing={1} alignItems="center" sx={{ color: 'warning.main' }}>
+                     <Typography variant="body2" fontWeight="bold">{stats.expiringSoonCount}</Typography>
+                     <Typography variant="body2">expiring soon</Typography>
+                 </Stack>
+               )}
+           </Stack>
+        </CardContent>
+      </Card>
     </motion.div>
   );
 }
