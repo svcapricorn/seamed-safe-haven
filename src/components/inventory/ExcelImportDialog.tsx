@@ -86,7 +86,7 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
 
       const mappedData: ImportRow[] = jsonData.map((row, index) => ({
         id: `row-${index}-${Date.now()}`,
-        name: row['Label Name'] || row['Name'] || row['name'] || '',
+        name: row['Label Name'] || row['label Name'] || row['Name'] || row['name'] || '',
         nickname: row['Nickname'] || row['nickname'] || '',
         category: validateCategory(row['Category'] || row['category']),
         chemicalName: row['Chemical Name'] || row['chemicalName'] || '',
@@ -95,13 +95,13 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
         vessel: row['Vessel'] || row['vessel'] || '',
         location: validateLocation(row['Location'] || row['location']),
         strength: row['Strength'] || row['strength'] || '',
-        unitType: row['Unit type'] || row['unitType'] || '',
+        unitType: row['Unit type'] || row['Unit Type'] || row['unitType'] || '',
         quantity: Number(row['Quantity'] || row['Qty'] || row['quantity']) || 1,
         remaining: row['Remaining'] || row['remaining'] || '',
         minQuantity: Number(row['Min Quantity'] || row['Min'] || row['minQuantity']) || 1,
         scriptName: row['Name on Script'] || row['scriptName'] || '',
-        dosesLeft: row['Doses left'] || row['dosesLeft'] || '',
-        unitSize: row['Unit size'] || row['unitSize'] || '',
+        dosesLeft: row['Doses left'] || row['Doses Left'] || row['dosesLeft'] || '',
+        unitSize: row['Unit size'] || row['Unit Size'] || row['unitSize'] || '',
         expirationDate: parseDate(row['Expiration'] || row['Expiry'] || row['expirationDate']),
         notes: row['Notes'] || row['notes'] || '',
         barcode: row['Barcode'] || row['barcode'] || ''
@@ -297,20 +297,25 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
                <Table stickyHeader size="small">
                  <TableHead>
                    <TableRow>
-                     <TableCell width={120}>Barcode</TableCell>
-                     <TableCell>Label Name</TableCell>
-                     <TableCell>Nickname</TableCell>
-                     <TableCell width={120}>Category</TableCell>
+                     <TableCell width={100}>Barcode</TableCell>
+                     <TableCell width={150}>Label Name</TableCell>
+                     <TableCell width={100}>Nickname</TableCell>
+                     <TableCell width={100}>Category</TableCell>
                      <TableCell width={120}>Chemical Name</TableCell>
-                     <TableCell width={120}>Brand</TableCell>
-                     <TableCell width={80}>Qty</TableCell>
-                     <TableCell width={80}>Min</TableCell>
-                     <TableCell width={120}>Doses Left</TableCell>
-                     <TableCell width={120}>Location</TableCell>
-                     <TableCell width={120}>Vessel</TableCell>
-                     <TableCell width={140}>Expiration</TableCell>
-                     <TableCell width={100}>Remaining</TableCell>
-                     <TableCell>Notes</TableCell>
+                     <TableCell width={100}>Brand</TableCell>
+                     <TableCell width={100}>Container</TableCell>
+                     <TableCell width={100}>Vessel</TableCell>
+                     <TableCell width={100}>Location</TableCell>
+                     <TableCell width={80}>Strength</TableCell>
+                     <TableCell width={80}>Unit Type</TableCell>
+                     <TableCell width={60}>Qty</TableCell>
+                     <TableCell width={80}>Remaining</TableCell>
+                     <TableCell width={60}>Min</TableCell>
+                     <TableCell width={120}>Name on Script</TableCell>
+                     <TableCell width={80}>Doses Left</TableCell>
+                     <TableCell width={80}>Unit Size</TableCell>
+                     <TableCell width={120}>Expiration</TableCell>
+                     <TableCell width={150}>Notes</TableCell>
                      <TableCell width={50}></TableCell>
                    </TableRow>
                  </TableHead>
@@ -374,24 +379,17 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
                        <TableCell>
                          <TextField 
                            variant="standard" 
-                           type="number" 
-                           value={row.quantity} 
-                           onChange={(e) => handleCellChange(row.id, 'quantity', Number(e.target.value))}
+                           fullWidth 
+                           value={row.container} 
+                           onChange={(e) => handleCellChange(row.id, 'container', e.target.value)}
                          />
                        </TableCell>
                        <TableCell>
                          <TextField 
                            variant="standard" 
-                           type="number" 
-                           value={row.minQuantity} 
-                           onChange={(e) => handleCellChange(row.id, 'minQuantity', Number(e.target.value))}
-                         />
-                       </TableCell>
-                       <TableCell>
-                         <TextField 
-                           variant="standard" 
-                           value={row.dosesLeft} 
-                           onChange={(e) => handleCellChange(row.id, 'dosesLeft', e.target.value)}
+                           fullWidth 
+                           value={row.vessel} 
+                           onChange={(e) => handleCellChange(row.id, 'vessel', e.target.value)}
                          />
                        </TableCell>
                        <TableCell>
@@ -410,8 +408,62 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
                          <TextField 
                            variant="standard" 
                            fullWidth 
-                           value={row.vessel} 
-                           onChange={(e) => handleCellChange(row.id, 'vessel', e.target.value)}
+                           value={row.strength} 
+                           onChange={(e) => handleCellChange(row.id, 'strength', e.target.value)}
+                         />
+                       </TableCell>
+                       <TableCell>
+                         <TextField 
+                           variant="standard" 
+                           fullWidth 
+                           value={row.unitType} 
+                           onChange={(e) => handleCellChange(row.id, 'unitType', e.target.value)}
+                         />
+                       </TableCell>
+                       <TableCell>
+                         <TextField 
+                           variant="standard" 
+                           type="number" 
+                           value={row.quantity} 
+                           onChange={(e) => handleCellChange(row.id, 'quantity', Number(e.target.value))}
+                         />
+                       </TableCell>
+                       <TableCell>
+                         <TextField 
+                           variant="standard" 
+                           fullWidth 
+                           value={row.remaining || ''} 
+                           onChange={(e) => handleCellChange(row.id, 'remaining', e.target.value)}
+                         />
+                       </TableCell>
+                       <TableCell>
+                         <TextField 
+                           variant="standard" 
+                           type="number" 
+                           value={row.minQuantity} 
+                           onChange={(e) => handleCellChange(row.id, 'minQuantity', Number(e.target.value))}
+                         />
+                       </TableCell>
+                       <TableCell>
+                         <TextField 
+                           variant="standard" 
+                           fullWidth 
+                           value={row.scriptName} 
+                           onChange={(e) => handleCellChange(row.id, 'scriptName', e.target.value)}
+                         />
+                       </TableCell>
+                       <TableCell>
+                         <TextField 
+                           variant="standard" 
+                           value={row.dosesLeft} 
+                           onChange={(e) => handleCellChange(row.id, 'dosesLeft', e.target.value)}
+                         />
+                       </TableCell>
+                       <TableCell>
+                         <TextField 
+                           variant="standard" 
+                           value={row.unitSize} 
+                           onChange={(e) => handleCellChange(row.id, 'unitSize', e.target.value)}
                          />
                        </TableCell>
                        <TableCell>
@@ -422,14 +474,6 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
                            value={row.expirationDate} 
                            onChange={(e) => handleCellChange(row.id, 'expirationDate', e.target.value)}
                            InputLabelProps={{ shrink: true }}
-                         />
-                       </TableCell>
-                       <TableCell>
-                         <TextField 
-                           variant="standard" 
-                           fullWidth 
-                           value={row.remaining || ''} 
-                           onChange={(e) => handleCellChange(row.id, 'remaining', e.target.value)}
                          />
                        </TableCell>
                        <TableCell>

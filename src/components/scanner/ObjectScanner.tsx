@@ -163,7 +163,7 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
           },
           signal: controller.signal,
           body: JSON.stringify({
-            model: "gpt-4o",
+            model: "gpt-4o-mini",
             messages: [
               {
                 role: "system",
@@ -208,7 +208,8 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
 
     if (!result) {
       console.log('Using simulation fallback...');
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Reduced delay for better perceived performance
+      await new Promise(resolve => setTimeout(resolve, 500)); 
 
       const randomIndex = Math.floor(Math.random() * MEDICAL_SUPPLY_PATTERNS.length);
       const identified = MEDICAL_SUPPLY_PATTERNS[randomIndex];
@@ -233,15 +234,36 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
 
+    // Performance optimization: Scale down image for faster API transfer
+    // Max 720px is sufficient for text recognition
+    const MAX_DIMENSION = 720;
+    let width = video.videoWidth;
+    let height = video.videoHeight;
+
+    if (width > height) {
+      if (width > MAX_DIMENSION) {
+        height = Math.round(height * (MAX_DIMENSION / width));
+        width = MAX_DIMENSION;
+      }
+    } else {
+      if (height > MAX_DIMENSION) {
+        width = Math.round(width * (MAX_DIMENSION / height));
+        height = MAX_DIMENSION;
+      }
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0);
+    // Draw scaled image
+    ctx.drawImage(video, 0, 0, width, height);
 
-    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+    // Reduce quality slightly to 0.7 for smaller payload
+    const imageData = canvas.toDataURL('image/jpeg', 0.7);
     setCapturedImage(imageData);
     
     // Pause video
