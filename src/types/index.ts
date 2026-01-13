@@ -26,14 +26,35 @@ export type StorageLocation =
 
 export interface InventoryItem {
   id: string;
-  name: string;
+  // Core Identity
+  nickname?: string;
+  name: string; // "Label Name"
+  chemicalName?: string;
+  brand?: string;
+  
+  // Categorization
   category: ItemCategory;
-  quantity: number;
+  vessel?: string; // Manually entered or inherited
+  
+  // Medical Details
+  strength?: string; // e.g. "500mg"
+  unitType?: string; // e.g. "pill", "ml"
+  unitSize?: string; // e.g. "100 count bottle"
+  container?: string; // e.g. "Orange Bottle", "Box"
+  scriptName?: string; // "Name on Script"
+
+  // Quantities
+  quantity: number; // Number of full units/containers
+  remaining?: string; // e.g. "50%", "10 pills" (Visual estimate)
+  dosesLeft?: number; // Calculated/tracked specific doses
   minQuantity: number; // For low-stock alerts
+  
+  // Logistics
   expirationDate?: string; // ISO date string
   location: StorageLocation;
   barcode?: string;
-  remaining?: string; // e.g. "50%", "10 pills", "Almost empty"
+  
+  // Media & Meta
   photos?: string[]; // Array of base64 strings or URLs
   notes?: string;
   createdAt: string;

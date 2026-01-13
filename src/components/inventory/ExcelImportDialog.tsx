@@ -33,15 +33,25 @@ interface ExcelImportDialogProps {
 
 interface ImportRow {
   id: string; // temp id for key
-  name: string;
+  name: string; // Label Name
+  nickname: string;
   category: ItemCategory;
-  quantity: number;
-  minQuantity: number;
+  chemicalName: string;
+  brand: string;
+  container: string;
+  vessel: string;
   location: StorageLocation;
+  strength: string;
+  unitType: string;
+  quantity: number;
+  remaining: string;
+  minQuantity: number;
+  scriptName: string;
+  dosesLeft: string;
+  unitSize: string;
   expirationDate: string;
   notes: string;
   barcode: string;
-  remaining: string;
 }
 
 const CATEGORIES: ItemCategory[] = [
@@ -76,15 +86,25 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
 
       const mappedData: ImportRow[] = jsonData.map((row, index) => ({
         id: `row-${index}-${Date.now()}`,
-        name: row['Name'] || row['Item'] || row['name'] || '',
+        name: row['Label Name'] || row['Name'] || row['name'] || '',
+        nickname: row['Nickname'] || row['nickname'] || '',
         category: validateCategory(row['Category'] || row['category']),
-        quantity: Number(row['Quantity'] || row['Qty'] || row['quantity']) || 1,
-        minQuantity: Number(row['Min Quantity'] || row['Min'] || row['minQuantity']) || 1,
+        chemicalName: row['Chemical Name'] || row['chemicalName'] || '',
+        brand: row['Brand'] || row['brand'] || '',
+        container: row['Container'] || row['container'] || '',
+        vessel: row['Vessel'] || row['vessel'] || '',
         location: validateLocation(row['Location'] || row['location']),
+        strength: row['Strength'] || row['strength'] || '',
+        unitType: row['Unit type'] || row['unitType'] || '',
+        quantity: Number(row['Quantity'] || row['Qty'] || row['quantity']) || 1,
+        remaining: row['Remaining'] || row['remaining'] || '',
+        minQuantity: Number(row['Min Quantity'] || row['Min'] || row['minQuantity']) || 1,
+        scriptName: row['Name on Script'] || row['scriptName'] || '',
+        dosesLeft: row['Doses left'] || row['dosesLeft'] || '',
+        unitSize: row['Unit size'] || row['unitSize'] || '',
         expirationDate: parseDate(row['Expiration'] || row['Expiry'] || row['expirationDate']),
         notes: row['Notes'] || row['notes'] || '',
-        barcode: row['Barcode'] || row['barcode'] || '',
-        remaining: row['Remaining'] || row['Left'] || row['remaining'] || ''
+        barcode: row['Barcode'] || row['barcode'] || ''
       }));
 
       setData(mappedData);
@@ -138,14 +158,24 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
         if (!row.name) continue; // Skip empty names
         await addItem({
           name: row.name,
+          nickname: row.nickname || undefined,
           category: row.category,
-          quantity: row.quantity,
-          minQuantity: row.minQuantity,
+          chemicalName: row.chemicalName || undefined,
+          brand: row.brand || undefined,
+          container: row.container || undefined,
+          vessel: row.vessel || undefined,
           location: row.location,
+          strength: row.strength || undefined,
+          unitType: row.unitType || undefined,
+          quantity: row.quantity,
+          remaining: row.remaining || undefined,
+          minQuantity: row.minQuantity,
+          scriptName: row.scriptName || undefined,
+          dosesLeft: row.dosesLeft ? Number(row.dosesLeft) : undefined,
+          unitSize: row.unitSize || undefined,
           expirationDate: row.expirationDate || undefined,
-          notes: row.notes,
-          barcode: row.barcode || undefined,
-          remaining: row.remaining || undefined
+          notes: row.notes || undefined,
+          barcode: row.barcode || undefined
         });
         count++;
       }
@@ -163,14 +193,24 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
   const downloadTemplate = () => {
     const template = [
       {
-        'Name': 'Example Item',
-        'Category': 'first-aid',
-        'Quantity': 5,
-        'Min Quantity': 2,
+        'Nickname': 'PainKiller',
+        'Category': 'medications',
+        'Label Name': 'Ibuprofen 500mg',
+        'Chemical Name': 'Ibuprofen',
+        'Brand': 'Advil',
+        'Container': 'Bottle',
+        'Vessel': 'S/Y Julia',
         'Location': 'galley',
-        'Expiration': '2026-12-31',
-        'Notes': 'Standard size',
+        'Strength': '500mg',
+        'Unit type': 'Pill',
+        'Quantity': 2,
         'Remaining': '50%',
+        'Min Quantity': 1,
+        'Name on Script': '',
+        'Doses left': 40,
+        'Unit size': '100 count',
+        'Expiration': '2026-12-31',
+        'Notes': 'For mild pain',
         'Barcode': '123456789'
       }
     ];
@@ -258,11 +298,16 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
                  <TableHead>
                    <TableRow>
                      <TableCell width={120}>Barcode</TableCell>
-                     <TableCell>Item Name</TableCell>
+                     <TableCell>Label Name</TableCell>
+                     <TableCell>Nickname</TableCell>
                      <TableCell width={120}>Category</TableCell>
+                     <TableCell width={120}>Chemical Name</TableCell>
+                     <TableCell width={120}>Brand</TableCell>
                      <TableCell width={80}>Qty</TableCell>
                      <TableCell width={80}>Min</TableCell>
+                     <TableCell width={120}>Doses Left</TableCell>
                      <TableCell width={120}>Location</TableCell>
+                     <TableCell width={120}>Vessel</TableCell>
                      <TableCell width={140}>Expiration</TableCell>
                      <TableCell width={100}>Remaining</TableCell>
                      <TableCell>Notes</TableCell>
@@ -291,6 +336,14 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
                          />
                        </TableCell>
                        <TableCell>
+                         <TextField 
+                           variant="standard" 
+                           fullWidth 
+                           value={row.nickname} 
+                           onChange={(e) => handleCellChange(row.id, 'nickname', e.target.value)}
+                         />
+                       </TableCell>
+                       <TableCell>
                          <Select
                            variant="standard"
                            fullWidth
@@ -301,6 +354,22 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
                              <MenuItem key={c} value={c}>{c}</MenuItem>
                            ))}
                          </Select>
+                       </TableCell>
+                       <TableCell>
+                         <TextField 
+                           variant="standard" 
+                           fullWidth 
+                           value={row.chemicalName} 
+                           onChange={(e) => handleCellChange(row.id, 'chemicalName', e.target.value)}
+                         />
+                       </TableCell>
+                       <TableCell>
+                         <TextField 
+                           variant="standard" 
+                           fullWidth 
+                           value={row.brand} 
+                           onChange={(e) => handleCellChange(row.id, 'brand', e.target.value)}
+                         />
                        </TableCell>
                        <TableCell>
                          <TextField 
@@ -319,6 +388,13 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
                          />
                        </TableCell>
                        <TableCell>
+                         <TextField 
+                           variant="standard" 
+                           value={row.dosesLeft} 
+                           onChange={(e) => handleCellChange(row.id, 'dosesLeft', e.target.value)}
+                         />
+                       </TableCell>
+                       <TableCell>
                          <Select
                            variant="standard"
                            fullWidth
@@ -329,6 +405,14 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
                              <MenuItem key={l} value={l}>{l}</MenuItem>
                            ))}
                          </Select>
+                       </TableCell>
+                       <TableCell>
+                         <TextField 
+                           variant="standard" 
+                           fullWidth 
+                           value={row.vessel} 
+                           onChange={(e) => handleCellChange(row.id, 'vessel', e.target.value)}
+                         />
                        </TableCell>
                        <TableCell>
                          <TextField 

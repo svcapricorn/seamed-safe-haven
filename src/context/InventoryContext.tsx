@@ -276,15 +276,31 @@ export function InventoryProvider({ children, embeddedConfig }: InventoryProvide
 
   // Export to CSV
   const exportToCSV = useCallback(() => {
-    const headers = ['Name', 'Category', 'Quantity', 'Min Quantity', 'Expiration Date', 'Location', 'Notes'];
+    const headers = [
+      'Nickname', 'Category', 'Label Name', 'Chemical Name', 'Brand', 'Container', 'Vessel', 
+      'Location', 'Strength', 'Unit type', 'Quantity', 'Remaining', 'Min Quantity', 
+      'Name on Script', 'Doses left', 'Unit size', 'Expiration', 'Notes', 'Barcode'
+    ];
     const rows = items.map(item => [
-      item.name,
+      item.nickname || '',
       item.category,
-      item.quantity.toString(),
-      item.minQuantity.toString(),
-      item.expirationDate || '',
+      item.name, // Label Name
+      item.chemicalName || '',
+      item.brand || '',
+      item.container || '',
+      item.vessel || '',
       item.location,
+      item.strength || '',
+      item.unitType || '',
+      item.quantity.toString(),
+      item.remaining || '',
+      item.minQuantity.toString(),
+      item.scriptName || '',
+      item.dosesLeft?.toString() || '',
+      item.unitSize || '',
+      item.expirationDate || '',
       item.notes || '',
+      item.barcode || ''
     ]);
 
     const csvContent = [

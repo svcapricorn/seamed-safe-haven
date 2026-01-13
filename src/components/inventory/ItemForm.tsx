@@ -59,7 +59,18 @@ export function ItemForm({ existingItem, onScanBarcodeRequest, onScanObjectReque
   // ... (rest of the component logic remains similar, just the render changes)
   const [formData, setFormData] = useState({
     name: existingItem?.name || '',
+    nickname: existingItem?.nickname || '',
     category: existingItem?.category || 'first-aid' as ItemCategory,
+    chemicalName: existingItem?.chemicalName || '',
+    brand: existingItem?.brand || '',
+    container: existingItem?.container || '',
+    vessel: existingItem?.vessel || '',
+    strength: existingItem?.strength || '',
+    unitType: existingItem?.unitType || '',
+    unitSize: existingItem?.unitSize || '',
+    scriptName: existingItem?.scriptName || '',
+    dosesLeft: existingItem?.dosesLeft?.toString() || '',
+    
     quantity: existingItem?.quantity?.toString() || '1',
     minQuantity: existingItem?.minQuantity?.toString() || '1',
     expirationDate: existingItem?.expirationDate?.split('T')[0] || '',
@@ -184,9 +195,20 @@ export function ItemForm({ existingItem, onScanBarcodeRequest, onScanObjectReque
     setIsSubmitting(true);
 
     try {
-      const itemData = {
+      const itemData: any = {
         name: formData.name.trim(),
+        nickname: formData.nickname.trim() || undefined,
         category: formData.category,
+        chemicalName: formData.chemicalName.trim() || undefined,
+        brand: formData.brand.trim() || undefined,
+        container: formData.container.trim() || undefined,
+        vessel: formData.vessel.trim() || undefined,
+        strength: formData.strength.trim() || undefined,
+        unitType: formData.unitType.trim() || undefined,
+        unitSize: formData.unitSize.trim() || undefined,
+        scriptName: formData.scriptName.trim() || undefined,
+        dosesLeft: formData.dosesLeft ? parseFloat(formData.dosesLeft) : undefined,
+        
         quantity: parseInt(formData.quantity) || 0,
         minQuantity: parseInt(formData.minQuantity) || 1,
         expirationDate: formData.expirationDate || undefined,
@@ -280,21 +302,58 @@ export function ItemForm({ existingItem, onScanBarcodeRequest, onScanObjectReque
 
       {/* Main Form */}
       <Paper variant="outlined" sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {/* Name */}
+        <Typography variant="h6">General Info</Typography>
+        
+        {/* Names */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <TextField
+              id="name"
+              label="Label Name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="e.g., Bandages, Ibuprofen" // Label name
+              fullWidth
+              required
+              error={!!errors.name}
+              helperText={errors.name}
+              InputProps={{
+                 startAdornment: <InputAdornment position="start"><Package size={18} /></InputAdornment>,
+                 endAdornment: isLookingUp ? <InputAdornment position="end"><CircularProgress size={18} /></InputAdornment> : null
+              }}
+            />
+             <TextField
+              id="nickname"
+              label="Nickname"
+              value={formData.nickname}
+              onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+              fullWidth
+            />
+        </Box>
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <TextField
+              id="brand"
+              label="Brand"
+              value={formData.brand}
+              onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              id="vessel"
+              label="Vessel"
+              value={formData.vessel}
+              onChange={(e) => setFormData({ ...formData, vessel: e.target.value })}
+              fullWidth
+            />
+        </Box>
+
         <TextField
-          id="name"
-          label="Item Name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          placeholder="e.g., Bandages, Ibuprofen"
-          fullWidth
-          required
-          error={!!errors.name}
-          helperText={errors.name}
-          InputProps={{
-             startAdornment: <InputAdornment position="start"><Package size={18} /></InputAdornment>,
-             endAdornment: isLookingUp ? <InputAdornment position="end"><CircularProgress size={18} /></InputAdornment> : null
-          }}
+            id="chemicalName"
+            label="Chemical Name"
+            value={formData.chemicalName}
+            onChange={(e) => setFormData({ ...formData, chemicalName: e.target.value })}
+            fullWidth
+            placeholder="e.g. Ibuprofen, Paracetamol"
         />
 
         {/* Category */}
@@ -311,6 +370,66 @@ export function ItemForm({ existingItem, onScanBarcodeRequest, onScanObjectReque
             </MenuItem>
           ))}
         </TextField>
+
+        <Typography variant="h6" sx={{ mt: 1 }}>Details & Dosage</Typography>
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+             <TextField
+              id="strength"
+              label="Strength"
+              value={formData.strength}
+              onChange={(e) => setFormData({ ...formData, strength: e.target.value })}
+              placeholder="e.g. 500mg"
+              fullWidth
+            />
+             <TextField
+              id="unitType"
+              label="Unit Type"
+              value={formData.unitType}
+              onChange={(e) => setFormData({ ...formData, unitType: e.target.value })}
+              placeholder="e.g. Tablet, ml"
+              fullWidth
+            />
+        </Box>
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+             <TextField
+              id="container"
+              label="Container"
+              value={formData.container}
+              onChange={(e) => setFormData({ ...formData, container: e.target.value })}
+              placeholder="e.g. Bottle, Box"
+              fullWidth
+            />
+             <TextField
+              id="unitSize"
+              label="Unit Size"
+              value={formData.unitSize}
+              onChange={(e) => setFormData({ ...formData, unitSize: e.target.value })}
+              placeholder="e.g. 100 count"
+              fullWidth
+            />
+        </Box>
+        
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+             <TextField
+              id="scriptName"
+              label="Name on Script"
+              value={formData.scriptName}
+              onChange={(e) => setFormData({ ...formData, scriptName: e.target.value })}
+              fullWidth
+            />
+             <TextField
+              id="dosesLeft"
+              label="Doses Left"
+              type="number"
+              value={formData.dosesLeft}
+              onChange={(e) => setFormData({ ...formData, dosesLeft: e.target.value })}
+              fullWidth
+            />
+        </Box>
+
+        <Typography variant="h6" sx={{ mt: 1 }}>Inventory Control</Typography>
 
         {/* Quantity Row */}
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
