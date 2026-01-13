@@ -16,7 +16,8 @@ import {
   AlertCircle,
   Camera,
   QrCode,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useInventory } from '@/context/InventoryContext';
@@ -65,6 +66,7 @@ export function ItemForm({ existingItem, onScanBarcodeRequest, onScanObjectReque
     location: existingItem?.location || 'galley' as StorageLocation,
     barcode: existingItem?.barcode || scannedBarcode || '',
     remaining: existingItem?.remaining || '',
+    photos: existingItem?.photos || [] as string[],
     notes: existingItem?.notes || '',
   });
 
@@ -110,6 +112,7 @@ export function ItemForm({ existingItem, onScanBarcodeRequest, onScanObjectReque
         ...prev,
         name: identifiedObject.name,
         category: identifiedObject.category,
+        photos: identifiedObject.image ? [identifiedObject.image, ...prev.photos].slice(0, 20) : prev.photos,
       }));
       toast({
         title: 'Item identified',
@@ -117,6 +120,31 @@ export function ItemForm({ existingItem, onScanBarcodeRequest, onScanObjectReque
       });
     }
   }, [identifiedObject]);
+
+  const handlePhotoAdd = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files[0]) {
+      if (formData.photos.length >= 20) {
+        toast({ title: 'Limit Reached', description: 'Maximum 20 photos allowed.', variant: 'destructive' });
+        return;
+      }
+
+      const file = files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setFormData(prev => ({ ...prev, photos: [...prev.photos, result] }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePhotoRemove = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      photos: prev.photos.filter((_, i) => i !== index)
+    }));
+  };
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -165,6 +193,7 @@ export function ItemForm({ existingItem, onScanBarcodeRequest, onScanObjectReque
         location: formData.location,
         barcode: formData.barcode.trim() || undefined,
         remaining: formData.remaining.trim() || undefined,
+        photos: formData.photos,
         notes: formData.notes.trim() || undefined,
       };
 
@@ -351,6 +380,51 @@ export function ItemForm({ existingItem, onScanBarcodeRequest, onScanObjectReque
             </MenuItem>
           ))}
         </TextField>
+
+        {/* Photos */}
+        <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>Photos ({formData.photos.length}/20)</Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 1, mb: 2 }}>
+                {formData.photos.map((photo, index) => (
+                    <Box key={index} sx={{ position: 'relative', aspectRatio: '1', borderRadius: 1, overflow: 'hidden', border: 1, borderColor: 'divider' }}>
+                        <img src={photo} alt={`Item ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <IconButton 
+                            size="small" 
+                            onClick={() => handlePhotoRemove(index)}
+                            sx={{ position: 'absolute', top: 2, right: 2, bgcolor: 'rgba(0,0,0,0.5)', color: 'white', padding: 0.5, '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}
+                        >
+                            <X size={12} />
+                        </IconButton>
+                    </Box>
+                ))}
+                
+                {formData.photos.length < 20 && (
+                    <Button
+                        component="label"
+                        variant="outlined"
+                        sx={{ 
+                            aspectRatio: '1', 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            textTransform: 'none',
+                            borderStyle: 'dashed'
+                        }}
+                    >
+                        <Camera size={24} />
+                        <Typography variant="caption" sx={{ mt: 0.5 }}>Add</Typography>
+                        <input
+                            type="file"
+                            hidden
+                            accept="image/*"
+                            capture="environment"
+                            onChange={handlePhotoAdd}
+                        />
+                    </Button>
+                )}
+            </Box>
+        </Box>
 
         {/* Notes */}
         <TextField

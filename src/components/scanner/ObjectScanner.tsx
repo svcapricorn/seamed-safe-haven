@@ -26,6 +26,7 @@ export interface ObjectScanResult {
   name: string;
   category: ItemCategory;
   confidence: number;
+  image?: string;
 }
 
 const MEDICAL_SUPPLY_PATTERNS: { keywords: string[]; name: string; category: ItemCategory }[] = [
@@ -192,7 +193,8 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
               result = {
                 name: parsed.name,
                 category: parsed.category,
-                confidence: parsed.confidence || 0.85
+                confidence: parsed.confidence || 0.85,
+                image: imageData
               };
             }
           } catch (e) {
@@ -214,7 +216,8 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
       result = {
         name: identified.name,
         category: identified.category,
-        confidence: 0.75 + Math.random() * 0.2, 
+        confidence: 0.75 + Math.random() * 0.2,
+        image: imageData
       };
     }
 

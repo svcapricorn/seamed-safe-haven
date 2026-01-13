@@ -34,6 +34,7 @@ export interface InventoryItem {
   location: StorageLocation;
   barcode?: string;
   remaining?: string; // e.g. "50%", "10 pills", "Almost empty"
+  photos?: string[]; // Array of base64 strings or URLs
   notes?: string;
   createdAt: string;
   updatedAt: string;
