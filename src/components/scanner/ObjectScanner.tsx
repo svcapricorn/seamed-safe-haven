@@ -359,37 +359,55 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
             {/* Footer / Controls */}
             <Box sx={{ p: 4, bgcolor: 'black', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                 {!capturedImage && !isInitializing ? (
-                    <IconButton 
+                    <Button 
                         onClick={captureImage}
+                        variant="contained" 
+                        color="secondary" 
+                        size="large"
+                        startIcon={<Camera />}
+                        fullWidth
                         sx={{ 
-                            width: 80, 
-                            height: 80, 
-                            border: '4px solid white', 
-                            color: 'white',
-                            p: 0,
-                            '&:active': { transform: 'scale(0.95)' } 
+                            height: 56, 
+                            borderRadius: 2, 
+                            fontSize: '1rem', 
+                            textTransform: 'none',
+                            fontWeight: 600
                         }}
                     >
-                        <Box sx={{ width: 68, height: 68, bgcolor: 'white', borderRadius: '50%' }} />
-                    </IconButton>
+                        Capture & Identify
+                    </Button>
                 ) : (capturedImage && !isAnalyzing) ? (
                     <Button 
                         onClick={retakePhoto} 
                         variant="outlined" 
                         color="inherit" 
                         startIcon={<RefreshCw />}
-                        sx={{ color: 'white', borderColor: 'white', py: 1.5 }}
+                        sx={{ 
+                            color: 'white', 
+                            borderColor: 'white', 
+                            height: 56, 
+                            borderRadius: 2,
+                            textTransform: 'none'
+                        }}
                         fullWidth
                     >
-                        Retake
+                        Retake Photo
                     </Button>
                 ) : null}
                 
                 <Typography variant="caption" sx={{ color: 'white', opacity: 0.7 }}>
-                  {capturedImage ? 'Analyzing...' : 'Point camera at the medical supply item'}
+                  {capturedImage ? 'Analyzing the captured image...' : 'Point camera at the medical supply item'}
                 </Typography>
                 
-                <Button color="inherit" onClick={onClose} sx={{ color: 'white', opacity: 0.7 }}>
+                <Button 
+                    onClick={onClose} 
+                    sx={{ 
+                        color: 'white', 
+                        opacity: 0.7, 
+                        width: '100%',
+                        textTransform: 'none' 
+                    }}
+                >
                   Cancel
                 </Button>
             </Box>
