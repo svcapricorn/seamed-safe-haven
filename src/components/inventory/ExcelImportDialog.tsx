@@ -79,11 +79,64 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
     setError(null);
 
     try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data, { type: 'array' });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+      const buffer = await file.arrayBuffer();
+      const workbook = new ExcelJS.Workbook();
+      
+      if (file.name.toLowerCase().endsWith('.csv')) {
+         const text = new TextDecoder().decode(buffer);
+         const rows = text.split(/\r?\n/).map(row => row.split(',').map(c => c.replace(/^"|"$/g, '').trim()));
+         if (rows.length < 2) throw new Error('Invalid CSV file');
+         
+         const headers = rows[0];
+         const jsonData = rows.slice(1).reduce((acc: any[], rowValues) => {
+            if (rowValues.length < 1 || (rowValues.length === 1 && !rowValues[0])) return acc;
+            const obj: any = {};
+            headers.forEach((h, i) => {
+                obj[h] = rowValues[i];
+            });
+            acc.push(obj);
+            return acc;
+         }, []);
+         processJsonData(jsonData);
+      } else {
+         await workbook.xlsx.load(buffer);
+         const worksheet = workbook.worksheets[0];
+         if (!worksheet) throw new Error('No worksheet found in file');
+         
+         const jsonData: any[] = [];
+         let headers: string[] = [];
 
+         worksheet.eachRow((row, rowNumber) => {
+            const values = row.values as any[];
+            if (rowNumber === 1) {
+                headers = values.slice(1).map(v => v ? String(v).trim() : '');
+            } else {
+                const rowObj: any = {};
+                headers.forEach((header, idx) => {
+                    let val = values[idx + 1];
+                    if (val && typeof val === 'object') {
+                       // @ts-ignore
+                       if (val.text) val = val.text;
+                       // @ts-ignore
+                       else if (val.result) val = val.result;
+                    }
+                    rowObj[header] = val;
+                });
+                jsonData.push(rowObj);
+            }
+         });
+         processJsonData(jsonData);
+      }
+    } catch (err) {
+      console.error('Import error:', err);
+      setError('Failed to parse file. Please ensure it is a valid Excel or CSV file.');
+      setIsProcessing(false);
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const processJsonData = (jsonData: any[]) => {
       const mappedData: ImportRow[] = jsonData.map((row, index) => ({
         id: `row-${index}-${Date.now()}`,
         name: row['Label Name'] || row['label Name'] || row['Name'] || row['name'] || '',
@@ -108,13 +161,7 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
       }));
 
       setData(mappedData);
-    } catch (err) {
-      console.error('Import error:', err);
-      setError('Failed to parse file. Please ensure it is a valid Excel or CSV file.');
-    } finally {
       setIsProcessing(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
   };
 
   const validateCategory = (val: string): ItemCategory => {
