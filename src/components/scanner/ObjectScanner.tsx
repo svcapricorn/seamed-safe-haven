@@ -129,6 +129,14 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
       return () => stopCamera();
   }, [isOpen, startCamera, stopCamera]);
 
+  // Re-attach stream when returning to video view
+  useEffect(() => {
+    if (!capturedImage && videoRef.current && streamRef.current) {
+        videoRef.current.srcObject = streamRef.current;
+        videoRef.current.play().catch(e => console.warn("Resume play failed:", e));
+    }
+  }, [capturedImage]);
+
   const toggleTorch = async () => {
      const stream = streamRef.current;
     if (!stream) return;
@@ -145,7 +153,7 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
   };
 
   const analyzeImage = async (imageData: string) => {
-    setIsAnalyzing(true);
+    // setIsAnalyzing(true); // Already set in captureImage
     let result: ObjectScanResult | null = null;
     
     try {
@@ -231,53 +239,64 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
 
   const captureImage = () => {
     if (!videoRef.current || !canvasRef.current) return;
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-
-    // Performance optimization: Scale down image for faster API transfer
-    // Max 720px is sufficient for text recognition
-    const MAX_DIMENSION = 720;
-    let width = video.videoWidth;
-    let height = video.videoHeight;
-
-    if (width > height) {
-      if (width > MAX_DIMENSION) {
-        height = Math.round(height * (MAX_DIMENSION / width));
-        width = MAX_DIMENSION;
-      }
-    } else {
-      if (height > MAX_DIMENSION) {
-        width = Math.round(width * (MAX_DIMENSION / height));
-        height = MAX_DIMENSION;
-      }
-    }
-
-    canvas.width = width;
-    canvas.height = height;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Draw scaled image
-    ctx.drawImage(video, 0, 0, width, height);
-
-    // Reduce quality slightly to 0.7 for smaller payload
-    const imageData = canvas.toDataURL('image/jpeg', 0.7);
-    setCapturedImage(imageData);
     
-    // Pause video
-    video.pause();
-    
-    analyzeImage(imageData);
+    // Set loading state explicitly before processing to avoid UI stall feeling
+    setIsAnalyzing(true);
+
+    // Small delay to allow React to render the loading state before synchronous canvas work
+    setTimeout(() => {
+        try {
+            if (!videoRef.current || !canvasRef.current) return;
+            const video = videoRef.current;
+            const canvas = canvasRef.current;
+
+            // Performance optimization: Scale down image for faster API transfer
+            // Max 720px is sufficient for text recognition
+            const MAX_DIMENSION = 720;
+            let width = video.videoWidth;
+            let height = video.videoHeight;
+
+            if (width > height) {
+            if (width > MAX_DIMENSION) {
+                height = Math.round(height * (MAX_DIMENSION / width));
+                width = MAX_DIMENSION;
+            }
+            } else {
+            if (height > MAX_DIMENSION) {
+                width = Math.round(width * (MAX_DIMENSION / height));
+                height = MAX_DIMENSION;
+            }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            if (!ctx) throw new Error('Could not get canvas context');
+
+            // Draw scaled image
+            ctx.drawImage(video, 0, 0, width, height);
+
+            // Reduce quality to 0.6 for better performance/speed
+            const imageData = canvas.toDataURL('image/jpeg', 0.6);
+            setCapturedImage(imageData);
+            
+            // Pause video
+            video.pause();
+            
+            analyzeImage(imageData);
+        } catch (err) {
+            console.error("Capture error:", err);
+            setIsAnalyzing(false);
+            setError("Failed to capture image. Please try again.");
+        }
+    }, 50);
   };
 
   const retakePhoto = () => {
     setCapturedImage(null);
     setIsAnalyzing(false);
-    if (videoRef.current) {
-        videoRef.current.play().catch(console.error);
-    }
+    // Video playback resumption is handled by the new useEffect
   };
 
    return (
