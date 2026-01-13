@@ -22,6 +22,12 @@ export type StorageLocation =
   | 'stbd-cabinet-settee-fore'
   | 'stbd-cabinet-settee-aft'
   | 'galley'
+  | 'main-cabin' // Legacy
+  | 'cockpit' // Legacy
+  | 'nav-station' // Legacy
+  | 'forepeak' // Legacy
+  | 'lazarette' // Legacy
+  | 'deck-locker' // Legacy
   | 'other';
 
 export interface InventoryItem {
@@ -146,4 +152,11 @@ export const LOCATION_INFO: Record<StorageLocation, { label: string }> = {
   'stbd-cabinet-settee-aft': { label: 'Stbd cabinet above Settee - aft' },
   'galley': { label: 'Galley' },
   'other': { label: 'Other' },
+  // Legacy locations
+  'main-cabin': { label: 'Main Cabin (Legacy)' },
+  'cockpit': { label: 'Cockpit (Legacy)' },
+  'nav-station': { label: 'Nav Station (Legacy)' },
+  'forepeak': { label: 'Forepeak (Legacy)' },
+  'lazarette': { label: 'Lazarette (Legacy)' },
+  'deck-locker': { label: 'Deck Locker (Legacy)' },
 };
