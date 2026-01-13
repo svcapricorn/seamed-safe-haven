@@ -62,8 +62,9 @@ export function ItemForm({ existingItem, onScanBarcodeRequest, onScanObjectReque
     quantity: existingItem?.quantity?.toString() || '1',
     minQuantity: existingItem?.minQuantity?.toString() || '1',
     expirationDate: existingItem?.expirationDate?.split('T')[0] || '',
-    location: existingItem?.location || 'main-cabin' as StorageLocation,
+    location: existingItem?.location || 'galley' as StorageLocation,
     barcode: existingItem?.barcode || scannedBarcode || '',
+    remaining: existingItem?.remaining || '',
     notes: existingItem?.notes || '',
   });
 
@@ -163,6 +164,7 @@ export function ItemForm({ existingItem, onScanBarcodeRequest, onScanObjectReque
         expirationDate: formData.expirationDate || undefined,
         location: formData.location,
         barcode: formData.barcode.trim() || undefined,
+        remaining: formData.remaining.trim() || undefined,
         notes: formData.notes.trim() || undefined,
       };
 
@@ -305,6 +307,16 @@ export function ItemForm({ existingItem, onScanBarcodeRequest, onScanObjectReque
               helperText={errors.minQuantity}
             />
         </Box>
+
+        {/* Remaining in Open Unit */}
+        <TextField
+            id="remaining"
+            label="Amount Left (e.g. 50%, ~10 pills)"
+            value={formData.remaining}
+            onChange={(e) => setFormData({ ...formData, remaining: e.target.value })}
+            fullWidth
+            helperText="Track usage of the current open unit"
+        />
 
         {/* Expiration Date */}
         <TextField

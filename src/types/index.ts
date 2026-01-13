@@ -17,13 +17,11 @@ export type ItemCategory =
 export type ItemStatus = 'ok' | 'low-stock' | 'expiring-soon' | 'expired' | 'critical';
 
 export type StorageLocation = 
-  | 'main-cabin'
-  | 'cockpit'
-  | 'nav-station'
+  | 'head-fore'
+  | 'head-aft'
+  | 'stbd-cabinet-settee-fore'
+  | 'stbd-cabinet-settee-aft'
   | 'galley'
-  | 'forepeak'
-  | 'lazarette'
-  | 'deck-locker'
   | 'other';
 
 export interface InventoryItem {
@@ -35,6 +33,7 @@ export interface InventoryItem {
   expirationDate?: string; // ISO date string
   location: StorageLocation;
   barcode?: string;
+  remaining?: string; // e.g. "50%", "10 pills", "Almost empty"
   notes?: string;
   createdAt: string;
   updatedAt: string;
@@ -119,12 +118,10 @@ export const CATEGORY_INFO: Record<ItemCategory, { label: string; icon: string; 
 };
 
 export const LOCATION_INFO: Record<StorageLocation, { label: string }> = {
-  'main-cabin': { label: 'Main Cabin' },
-  'cockpit': { label: 'Cockpit' },
-  'nav-station': { label: 'Nav Station' },
+  'head-fore': { label: 'Head - fore' },
+  'head-aft': { label: 'Head - aft' },
+  'stbd-cabinet-settee-fore': { label: 'Stbd cabinet above Settee - fore' },
+  'stbd-cabinet-settee-aft': { label: 'Stbd cabinet above Settee - aft' },
   'galley': { label: 'Galley' },
-  'forepeak': { label: 'Forepeak' },
-  'lazarette': { label: 'Lazarette' },
-  'deck-locker': { label: 'Deck Locker' },
   'other': { label: 'Other' },
 };

@@ -40,6 +40,8 @@ interface ImportRow {
   location: StorageLocation;
   expirationDate: string;
   notes: string;
+  barcode: string;
+  remaining: string;
 }
 
 const CATEGORIES: ItemCategory[] = [
@@ -48,8 +50,8 @@ const CATEGORIES: ItemCategory[] = [
 ];
 
 const LOCATIONS: StorageLocation[] = [
-  'main-cabin', 'cockpit', 'nav-station', 'galley', 
-  'forepeak', 'lazarette', 'deck-locker', 'other'
+  'head-fore', 'head-aft', 'stbd-cabinet-settee-fore', 
+  'stbd-cabinet-settee-aft', 'galley', 'other'
 ];
 
 export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
@@ -81,6 +83,8 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
         location: validateLocation(row['Location'] || row['location']),
         expirationDate: parseDate(row['Expiration'] || row['Expiry'] || row['expirationDate']),
         notes: row['Notes'] || row['notes'] || '',
+        barcode: row['Barcode'] || row['barcode'] || '',
+        remaining: row['Remaining'] || row['Left'] || row['remaining'] || ''
       }));
 
       setData(mappedData);
@@ -140,6 +144,8 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
           location: row.location,
           expirationDate: row.expirationDate || undefined,
           notes: row.notes,
+          barcode: row.barcode || undefined,
+          remaining: row.remaining || undefined
         });
         count++;
       }
@@ -161,9 +167,11 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
         'Category': 'first-aid',
         'Quantity': 5,
         'Min Quantity': 2,
-        'Location': 'main-cabin',
+        'Location': 'galley',
         'Expiration': '2026-12-31',
-        'Notes': 'Standard size'
+        'Notes': 'Standard size',
+        'Remaining': '50%',
+        'Barcode': '123456789'
       }
     ];
     const ws = XLSX.utils.json_to_sheet(template);
@@ -249,12 +257,14 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
                <Table stickyHeader size="small">
                  <TableHead>
                    <TableRow>
+                     <TableCell width={120}>Barcode</TableCell>
                      <TableCell>Item Name</TableCell>
                      <TableCell width={120}>Category</TableCell>
                      <TableCell width={80}>Qty</TableCell>
                      <TableCell width={80}>Min</TableCell>
                      <TableCell width={120}>Location</TableCell>
                      <TableCell width={140}>Expiration</TableCell>
+                     <TableCell width={100}>Remaining</TableCell>
                      <TableCell>Notes</TableCell>
                      <TableCell width={50}></TableCell>
                    </TableRow>
@@ -262,6 +272,15 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
                  <TableBody>
                    {data.map((row) => (
                      <TableRow key={row.id} hover>
+                       <TableCell>
+                         <TextField 
+                           variant="standard" 
+                           fullWidth 
+                           value={row.barcode || ''} 
+                           onChange={(e) => handleCellChange(row.id, 'barcode', e.target.value)}
+                           placeholder="Scan/Type"
+                         />
+                       </TableCell>
                        <TableCell>
                          <TextField 
                            variant="standard" 
@@ -319,6 +338,14 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
                            value={row.expirationDate} 
                            onChange={(e) => handleCellChange(row.id, 'expirationDate', e.target.value)}
                            InputLabelProps={{ shrink: true }}
+                         />
+                       </TableCell>
+                       <TableCell>
+                         <TextField 
+                           variant="standard" 
+                           fullWidth 
+                           value={row.remaining || ''} 
+                           onChange={(e) => handleCellChange(row.id, 'remaining', e.target.value)}
                          />
                        </TableCell>
                        <TableCell>

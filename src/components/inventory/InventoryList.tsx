@@ -247,7 +247,7 @@ function InventoryItemCard({ item, index }: InventoryItemCardProps) {
             
             <Stack direction="row" spacing={2} mt={0.5} alignItems="center">
               <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5}>
-                <Package size={12} /> Qty: {item.quantity}
+                <Package size={12} /> Qty: {item.quantity} {item.remaining && `• ${item.remaining}`}
               </Typography>
               {item.expirationDate && (
                 <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5}>
@@ -255,7 +255,7 @@ function InventoryItemCard({ item, index }: InventoryItemCardProps) {
                 </Typography>
               )}
               <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5} noWrap>
-                <MapPin size={12} /> {LOCATION_INFO[item.location].label}
+                <MapPin size={12} /> {LOCATION_INFO[item.location]?.label || item.location}
               </Typography>
             </Stack>
           </Box>
