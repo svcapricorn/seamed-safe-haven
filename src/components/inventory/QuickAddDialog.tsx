@@ -52,7 +52,7 @@ export function QuickAddDialog({ open, onClose, item, scannedBarcode, onConfirmA
   };
 
   const handleCreateNew = () => {
-    navigate(`/inventory/add?barcode=${scannedBarcode}`);
+    navigate(`/add?barcode=${scannedBarcode}`);
     onClose();
   };
 
