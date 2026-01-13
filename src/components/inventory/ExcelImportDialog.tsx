@@ -24,7 +24,7 @@ import {
 import { X, Upload, Save, Trash2, Download } from 'lucide-react';
 import { useInventory } from '@/context/InventoryContext';
 import { ItemCategory, StorageLocation } from '@/types';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 interface ExcelImportDialogProps {
   open: boolean;
@@ -190,7 +190,7 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
     }
   };
 
-  const downloadTemplate = () => {
+  const downloadTemplate = async () => {
     const template = [
       {
         'Nickname': 'PainKiller',
@@ -214,10 +214,29 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
         'Barcode': '123456789'
       }
     ];
-    const ws = XLSX.utils.json_to_sheet(template);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Template");
-    XLSX.writeFile(wb, "seamed_inventory_template.xlsx");
+    
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Template');
+    
+    // Add Headers
+    const headers = Object.keys(template[0]);
+    worksheet.addRow(headers);
+    
+    // Add Data
+    const values = Object.values(template[0]);
+    worksheet.addRow(values);
+
+    // Style headers
+    worksheet.getRow(1).font = { bold: true };
+    
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'seamed_inventory_template.xlsx';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -263,7 +282,7 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
             <Upload size={48} className="text-muted-foreground" />
             <Typography variant="h6">Upload Excel or CSV File</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400 }}>
-              Drag and drop your file here, or click to browse. Supported formats: .xlsx, .xls, .csv
+              Drag and drop your file here, or click to browse. Supported formats: .xlsx, .csv
             </Typography>
             
             <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
@@ -277,7 +296,7 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
                    ref={fileInputRef}
                    type="file" 
                    hidden 
-                   accept=".xlsx,.xls,.csv" 
+                   accept=".xlsx,.csv" 
                    onChange={handleFileChange}
                  />
                </Button>
