@@ -167,12 +167,12 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
             messages: [
               {
                 role: "system",
-                content: "You are a medical inventory assistant. Identify the medical supply item in the image. Return strictly valid JSON with no markdown formatting containing: 'name' (string), 'category' (one of: medications, first-aid, tools, diagnostic, ppe, other), and 'confidence' (number 0-1)."
+                content: "You are a medical inventory assistant. Identify the medical supply item in the image by READING THE TEXT LABELS (OCR) and analyzing the packaging. Prioritize text found on the label (Brand, Chemical Name, Dosage) to determine the item 'name'. Return strictly valid JSON with no markdown formatting containing: 'name' (string), 'category' (one of: medications, first-aid, tools, diagnostic, ppe, other), and 'confidence' (number 0-1)."
               },
               {
                 role: "user",
                 content: [
-                  { type: "text", text: "Identify this medical item in detail." },
+                  { type: "text", text: "Identify this medical item. Read all visible text on the packaging, bottle, or box to determine exactly what it is. Include dosage or specific type if visible." },
                   { type: "image_url", image_url: { url: imageData } }
                 ]
               }
