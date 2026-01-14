@@ -1,6 +1,6 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import theme from "./theme";
 import { InventoryProvider } from "@/context/InventoryContext";
@@ -14,8 +14,40 @@ import TemplatesPage from "@/pages/Templates";
 import NotFound from "./pages/NotFound";
 import { Toaster } from "@/components/ui/toaster"; // Keeping for smooth transition
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Security, LoginCallback } from '@okta/okta-react';
+import { OktaAuth, toRelativeUrl } from '@okta/okta-auth-js';
+import { oktaConfig } from "@/config/okta";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
+const oktaAuth = new OktaAuth(oktaConfig);
+
+const AppRoutes = () => {
+    const navigate = useNavigate();
+    const restoreOriginalUri = async (_oktaAuth: any, originalUri: string) => {
+        navigate(toRelativeUrl(originalUri || '/', window.location.origin));
+    };
+
+    return (
+        <Security oktaAuth={oktaAuth} restoreOriginalUri={restoreOriginalUri}>
+            <Routes>
+                <Route path="/login/callback" element={<LoginCallback />} />
+                <Route element={<ProtectedRoute />}>
+                    <Route element={<AppShell />}>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/inventory" element={<InventoryPage />} />
+                        <Route path="/inventory/:id" element={<ItemDetailPage />} />
+                        <Route path="/add" element={<AddItemPage />} />
+                        <Route path="/settings" element={<SettingsPage />} />
+                        <Route path="/templates" element={<TemplatesPage />} />
+                    </Route>
+                </Route>
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+            </Routes>
+        </Security>
+    );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -26,18 +58,7 @@ const App = () => (
           <InventoryProvider>
             <Toaster />
             <Sonner />
-            <Routes>
-              <Route element={<AppShell />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/inventory" element={<InventoryPage />} />
-                <Route path="/inventory/:id" element={<ItemDetailPage />} />
-                <Route path="/add" element={<AddItemPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/templates" element={<TemplatesPage />} />
-              </Route>
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AppRoutes />
           </InventoryProvider>
         </BrowserRouter>
       </TooltipProvider>
