@@ -1,4 +1,4 @@
-// SeaMed Tracker - Regulatory Templates Page
+// SailMed Tracker - Regulatory Templates Page
 // Non-enforcing reference templates from maritime authorities
 
 import React from 'react';

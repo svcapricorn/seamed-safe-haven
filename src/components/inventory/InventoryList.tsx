@@ -1,4 +1,4 @@
-// SeaMed Tracker - Inventory List Component
+// SailMed Tracker - Inventory List Component
 // Displays all inventory items with filtering and search
 
 import React, { useState, useMemo } from 'react';

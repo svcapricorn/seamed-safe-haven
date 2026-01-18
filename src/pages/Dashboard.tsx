@@ -1,4 +1,4 @@
-// SeaMed Tracker - Dashboard Page
+// SailMed Tracker - Dashboard Page
 // Main overview page with status and alerts
 
 import React from 'react';
@@ -25,7 +25,7 @@ export default function Dashboard() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `seamed-inventory-${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `sailmed-inventory-${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -121,7 +121,7 @@ export default function Dashboard() {
       {/* Disclaimer */}
       <Box sx={{ textAlign: 'center', py: 2, maxWidth: 400, mx: 'auto' }}>
         <Typography variant="caption" color="text.secondary">
-          SeaMed Tracker is an organizational tool only. It does not provide medical advice, 
+          SailMed Tracker is an organizational tool only. It does not provide medical advice, 
           diagnosis, or treatment recommendations.
         </Typography>
       </Box>

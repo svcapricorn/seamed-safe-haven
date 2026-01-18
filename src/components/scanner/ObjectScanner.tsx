@@ -1,4 +1,4 @@
-// SeaMed Tracker - Object Scanner Component
+// SailMed Tracker - Object Scanner Component
 // Uses device camera to capture and identify medical supplies
 
 import React, { useRef, useState, useCallback, useEffect } from 'react';

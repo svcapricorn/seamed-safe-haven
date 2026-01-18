@@ -1,4 +1,4 @@
-// SeaMed Tracker - Inventory Page
+// SailMed Tracker - Inventory Page
 // Full inventory list with filtering
 
 import React, { useState } from 'react';

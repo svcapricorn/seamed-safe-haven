@@ -1,4 +1,4 @@
-// SeaMed Tracker - Settings Page
+// SailMed Tracker - Settings Page
 // App settings and preferences
 
 import React, { useState } from 'react';
@@ -43,7 +43,7 @@ export default function SettingsPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `seamed-inventory-${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `sailmed-inventory-${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -183,7 +183,7 @@ export default function SettingsPage() {
         
         <SettingsItem
           icon={<Info className="h-5 w-5" />}
-          label="About SeaMed Tracker"
+          label="About SailMed Tracker"
           description="Version 1.0.0"
           disabled
         />
@@ -261,7 +261,7 @@ export default function SettingsPage() {
         className="text-center py-6"
       >
         <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-          SeaMed Tracker is an organizational tool only. It does not provide 
+          SailMed Tracker is an organizational tool only. It does not provide 
           medical advice, diagnosis, or treatment recommendations. Always 
           consult qualified medical professionals for health-related decisions.
         </p>

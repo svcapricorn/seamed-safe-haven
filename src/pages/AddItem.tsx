@@ -1,4 +1,4 @@
-// SeaMed Tracker - Add Item Page
+// SailMed Tracker - Add Item Page
 // Form for adding new inventory items
 
 import React, { useState, useEffect } from 'react';

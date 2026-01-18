@@ -1,4 +1,4 @@
-// SeaMed Tracker - Item Form Component
+// SailMed Tracker - Item Form Component
 // Add or edit inventory items
 
 import React, { useState, useEffect } from 'react';

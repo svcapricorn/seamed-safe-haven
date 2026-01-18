@@ -1,4 +1,4 @@
-// SeaMed Tracker - Alerts List Component
+// SailMed Tracker - Alerts List Component
 // Displays actionable alerts in a calm, non-alarmist way
 
 import React from 'react';

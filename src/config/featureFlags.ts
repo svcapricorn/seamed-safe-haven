@@ -1,4 +1,4 @@
-// SeaMed Tracker - Feature Flags
+// SailMed Tracker - Feature Flags
 // Designed for future monetization without implementing payments
 
 import { SubscriptionTier } from '@/types';

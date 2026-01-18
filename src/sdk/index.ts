@@ -1,32 +1,32 @@
-// SeaMed Tracker - SDK Entry Point
+// SailMed Tracker - SDK Entry Point
 // For embedding in other web applications
 
 import type { EmbeddedConfig } from '@/types';
 
-interface SeaMedInstance {
+interface SailMedInstance {
   destroy: () => void;
 }
 
 // SDK will be implemented in a future update
 // This is a placeholder for the embedded mode architecture
-export function createSeaMedTracker(
+export function createSailMedTracker(
   container: HTMLElement | string,
   config: EmbeddedConfig
-): SeaMedInstance {
-  console.log('SeaMed Tracker SDK initialized with config:', config);
+): SailMedInstance {
+  console.log('SailMed Tracker SDK initialized with config:', config);
   
   return {
     destroy: () => {
-      console.log('SeaMed Tracker destroyed');
+      console.log('SailMed Tracker destroyed');
     },
   };
 }
 
 // Auto-expose to window for script tag usage
 if (typeof window !== 'undefined') {
-  (window as any).SeaMedTracker = {
-    create: createSeaMedTracker,
+  (window as any).SailMedTracker = {
+    create: createSailMedTracker,
   };
 }
 
-export type { EmbeddedConfig, SeaMedInstance };
+export type { EmbeddedConfig, SailMedInstance };

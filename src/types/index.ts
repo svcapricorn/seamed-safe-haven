@@ -1,4 +1,4 @@
-// SeaMed Tracker - Core Types
+// SailMed Tracker - Core Types
 
 export type UserRole = 'captain' | 'medic' | 'crew';
 

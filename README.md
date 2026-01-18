@@ -1,4 +1,4 @@
-# SeaMed Safe Haven
+# SailMed Safe Haven
 
 ## Project Info
 

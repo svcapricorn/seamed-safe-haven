@@ -1,4 +1,4 @@
-// SeaMed Tracker - Quick Stats Component
+// SailMed Tracker - Quick Stats Component
 // Displays category breakdown and quick numbers
 
 import React from 'react';

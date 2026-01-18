@@ -1,4 +1,4 @@
-// SeaMed Tracker - Database Adapter (Switching from Dexie to API)
+// SailMed Tracker - Database Adapter (Switching from Dexie to API)
 import type { InventoryItem, Alert, AppSettings } from '@/types';
 import { oktaAuth } from '@/config/okta';
 
@@ -23,7 +23,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/inven
 
 // Fallback Settings DB (Local only for now, or move to backend later)
 import Dexie, { type EntityTable } from 'dexie';
-const db = new Dexie('SeaMedLocal') as any;
+const db = new Dexie('SailMedLocal') as any;
 db.version(1).stores({ 
   settings: 'id',
   alerts: '++id, createdAt, acknowledged'

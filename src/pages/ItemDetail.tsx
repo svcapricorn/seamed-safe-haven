@@ -1,4 +1,4 @@
-// SeaMed Tracker - Item Detail Page
+// SailMed Tracker - Item Detail Page
 // View and edit individual items
 
 import React, { useState, useEffect } from 'react';

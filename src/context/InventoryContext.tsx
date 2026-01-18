@@ -1,4 +1,4 @@
-// SeaMed Tracker - Inventory Context
+// SailMed Tracker - Inventory Context
 // Global state management for inventory data
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';

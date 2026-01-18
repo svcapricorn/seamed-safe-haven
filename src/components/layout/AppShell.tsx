@@ -1,4 +1,4 @@
-// SeaMed Tracker - App Shell Layout
+// SailMed Tracker - App Shell Layout
 // Mobile-first responsive layout with bottom navigation
 
 import React from 'react';
@@ -54,7 +54,7 @@ export function AppShell() {
         <Toolbar>
           <Anchor size={24} style={{ marginRight: 12 }} />
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
-            SeaMed
+            SailMed
           </Typography>
           
           {hasAlerts && (
