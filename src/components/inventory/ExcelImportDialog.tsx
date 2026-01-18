@@ -77,10 +77,12 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    console.log(`[Import] File selected: ${file.name} (${file.size} bytes)`);
     setIsProcessing(true);
     setError(null);
 
     try {
+      console.log('[Import] Reading file buffer...');
       const buffer = await file.arrayBuffer();
       const workbook = new ExcelJS.Workbook();
       
@@ -200,6 +202,7 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
   };
 
   const handleSave = async () => {
+    console.log('[Import] Starting batch import process...');
     setIsProcessing(true);
     setProgress(0);
     cancelImportRef.current = false;
@@ -207,13 +210,17 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
     try {
       let count = 0;
       const total = data.filter(row => row.name).length;
+      console.log(`[Import] Found ${total} valid items to import.`);
       
       for (const row of data) {
         if (cancelImportRef.current) {
+          console.warn('[Import] User cancelled operation.');
           throw new Error('Import cancelled by user');
         }
 
         if (!row.name) continue; // Skip empty names
+        
+        console.log(`[Import] Saving item ${count + 1}/${total}: ${row.name} (${row.category})`);
         await addItem({
           name: row.name,
           nickname: row.nickname || undefined,
@@ -240,12 +247,13 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
       }
       onClose();
       setData([]);
+      console.log(`[Import] Successfully imported ${count} items.`);
       alert(`Successfully imported ${count} items.`);
     } catch (err: any) {
       if (err.message === 'Import cancelled by user') {
          setError('Import cancelled. Some items may have been added.');
       } else {
-         console.error('Save error:', err);
+         console.error('[Import] Save error:', err);
          setError('Failed to save items. Please try again.');
       }
     } finally {

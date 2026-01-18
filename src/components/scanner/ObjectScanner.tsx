@@ -152,7 +152,7 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
     }
   };
 
-  const analyzeImage = async (imageData: string) => {
+  const analyzeImage = useCallback(async (imageData: string) => {
     // setIsAnalyzing(true); // Already set in captureImage
     let result: ObjectScanResult | null = null;
     
@@ -235,9 +235,9 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
     setIsAnalyzing(false);
     onIdentify(result);
     // Don't modify captured image or state here as we are closing or done
-  };
+  }, [onIdentify]);
 
-  const captureImage = () => {
+  const captureImage = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
     
     // Set loading state explicitly before processing to avoid UI stall feeling
@@ -291,7 +291,21 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
             setError("Failed to capture image. Please try again.");
         }
     }, 50);
-  };
+  }, [analyzeImage]);
+
+  // Auto-capture when camera is ready
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (isOpen && !isInitializing && !capturedImage && !isAnalyzing && !error) {
+      // Wait 1.5 seconds and capture automatically
+      timeoutId = setTimeout(() => {
+         captureImage();
+      }, 1500);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isOpen, isInitializing, capturedImage, isAnalyzing, error, captureImage]);
 
   const retakePhoto = () => {
     setCapturedImage(null);

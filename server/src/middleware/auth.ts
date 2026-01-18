@@ -31,7 +31,7 @@ export const verifyToken = async (req: CustomRequest, res: Response, next: NextF
           update: {},
           create: {
             id: userId,
-            email: 'dev@local.test',
+            email: `dev-${userId}@local.test`,
             firstName: 'Dev',
             lastName: 'User',
             settings: {
@@ -49,6 +49,15 @@ export const verifyToken = async (req: CustomRequest, res: Response, next: NextF
         console.log('[Auth] Dev user synced.');
       } catch (e) {
         console.error("Failed to seed dev user", e);
+        // If we can't seed the user, subsequent DB calls will fail 500
+        // It's better to fail here or at least know why.
+        // Proceeding might be dangerous if the user doesn't exist.
+        // Let's verify if user exists even if upsert failed (maybe unique constraint on email but user exists?)
+        const userExists = await prisma.user.findUnique({ where: { id: userId } });
+        if (!userExists) {
+           res.status(500).json({ error: 'Dev user sync failed', details: String(e) });
+           return;
+        }
       }
     } else {
       console.log('[Auth] Dev user already verified.');

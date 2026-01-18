@@ -74,6 +74,7 @@ router.post('/', async (req: Request, res: Response) => {
         ...rest,
         userId: customReq.userId,
         photos: JSON.stringify(photos || []),
+        minQuantity: rest.minQuantity !== undefined ? Number(rest.minQuantity) : 0, // Ensure minQuantity
         expirationDate: safeDate(req.body.expirationDate)
       }
     });
@@ -84,9 +85,9 @@ router.post('/', async (req: Request, res: Response) => {
     };
     
     res.status(201).json(responseItem);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to create item' });
+  } catch (error: any) {
+    console.error("Create Item Error:", error);
+    res.status(500).json({ error: 'Failed to create item', details: error.message });
   }
 });
 

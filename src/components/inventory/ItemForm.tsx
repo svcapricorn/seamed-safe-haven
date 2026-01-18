@@ -36,7 +36,8 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
-  CircularProgress
+  CircularProgress,
+  IconButton
 } from '@mui/material';
 import { toast } from '@/hooks/use-toast';
 import { ObjectScanResult } from '@/components/scanner/ObjectScanner';
