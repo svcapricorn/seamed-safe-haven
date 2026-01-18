@@ -67,6 +67,8 @@ const LOCATIONS: StorageLocation[] = [
 export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
   const [data, setData] = useState<ImportRow[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0); 
+  const cancelImportRef = useRef<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { addItem } = useInventory();
@@ -199,9 +201,18 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
 
   const handleSave = async () => {
     setIsProcessing(true);
+    setProgress(0);
+    cancelImportRef.current = false;
+    
     try {
       let count = 0;
+      const total = data.filter(row => row.name).length;
+      
       for (const row of data) {
+        if (cancelImportRef.current) {
+          throw new Error('Import cancelled by user');
+        }
+
         if (!row.name) continue; // Skip empty names
         await addItem({
           name: row.name,
@@ -225,15 +236,28 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
           barcode: row.barcode || undefined
         });
         count++;
+        setProgress(Math.round((count / total) * 100));
       }
       onClose();
       setData([]);
       alert(`Successfully imported ${count} items.`);
-    } catch (err) {
-      console.error('Save error:', err);
-      setError('Failed to save items. Please try again.');
+    } catch (err: any) {
+      if (err.message === 'Import cancelled by user') {
+         setError('Import cancelled. Some items may have been added.');
+      } else {
+         console.error('Save error:', err);
+         setError('Failed to save items. Please try again.');
+      }
     } finally {
       setIsProcessing(false);
+      setProgress(0);
+      cancelImportRef.current = false;
+    }
+  };
+
+  const handleCancelProcessing = () => {
+    if (confirm('Stop import? Items currently processing will finish, but no new items will be added.')) {
+      cancelImportRef.current = true;
     }
   };
 
@@ -301,9 +325,19 @@ export function ExcelImportDialog({ open, onClose }: ExcelImportDialogProps) {
           <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
             Import Excel Inventory
           </Typography>
-          <Button color="inherit" onClick={handleSave} disabled={data.length === 0 || isProcessing}>
-            {isProcessing ? 'Saving...' : 'Import Items'}
-          </Button>
+          {isProcessing ? (
+             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography variant="body2">{progress}%</Typography>
+                <CircularProgress color="inherit" size={24} value={progress} variant="determinate" />
+                <Button color="inherit" onClick={handleCancelProcessing} size="small" variant="outlined">
+                  Cancel
+                </Button>
+             </Box>
+          ) : (
+            <Button color="inherit" onClick={handleSave} disabled={data.length === 0}>
+              Import Items
+            </Button>
+          )}
         </Toolbar>
       </AppBar>
 

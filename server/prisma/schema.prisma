@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -37,11 +37,38 @@ model InventoryItem {
   barcode        String?
   
   // Media & Meta
-  photos         String[]
+  photos         String // SQLite limitation: Stored as JSON string
   notes          String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   
   // Ownership (from Okta user ID)
   userId         String
+  user           User     @relation(fields: [userId], references: [id])
+}
+
+model User {
+  id        String   @id // matches Okta ID
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  
+  items     InventoryItem[]
+  settings  AppSettings?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AppSettings {
+  id                    String   @id @default(uuid())
+  user                  User     @relation(fields: [userId], references: [id])
+  userId                String   @unique
+  
+  vesselName            String?
+  lowStockThreshold     Int      @default(25)
+  expirationWarningDays String   // SQLite limitation: Stored as JSON string
+  theme                 String   @default("system")
+  userRole              String   @default("captain")
+  subscriptionTier      String   @default("free")
 }

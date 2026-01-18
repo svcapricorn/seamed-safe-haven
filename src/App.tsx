@@ -15,12 +15,11 @@ import NotFound from "./pages/NotFound";
 import { Toaster } from "@/components/ui/toaster"; // Keeping for smooth transition
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Security, LoginCallback } from '@okta/okta-react';
-import { OktaAuth, toRelativeUrl } from '@okta/okta-auth-js';
-import { oktaConfig } from "@/config/okta";
+import { toRelativeUrl } from '@okta/okta-auth-js';
+import { oktaConfig, oktaAuth } from "@/config/okta";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
-const oktaAuth = new OktaAuth(oktaConfig);
 
 const AppRoutes = () => {
     const navigate = useNavigate();
