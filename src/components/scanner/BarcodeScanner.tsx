@@ -4,7 +4,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Camera, AlertCircle, Flashlight } from 'lucide-react';
-import { BrowserMultiFormatReader, NotFoundException } from '@zxing/library';
+import { BrowserMultiFormatReader, NotFoundException, BarcodeFormat, DecodeHintType } from '@zxing/library';
 import { 
     Dialog, 
     DialogContent, 
@@ -36,7 +36,21 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
         return;
     }
 
-    const reader = new BrowserMultiFormatReader();
+    const hints = new Map();
+    const formats = [
+        BarcodeFormat.QR_CODE,
+        BarcodeFormat.DATA_MATRIX,
+        BarcodeFormat.CODE_128,
+        BarcodeFormat.EAN_13,
+        BarcodeFormat.EAN_8,
+        BarcodeFormat.UPC_A,
+        BarcodeFormat.UPC_E,
+        BarcodeFormat.CODE_39,
+        BarcodeFormat.ITF
+    ];
+    hints.set(DecodeHintType.POSSIBLE_FORMATS, formats);
+    
+    const reader = new BrowserMultiFormatReader(hints);
     readerRef.current = reader;
     setIsInitializing(true);
     setError(null);
