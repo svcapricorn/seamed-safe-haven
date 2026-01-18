@@ -157,15 +157,6 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
     // setIsAnalyzing(true); // Already set in captureImage
     let result: ObjectScanResult | null = null;
     
-import { createWorker } from 'tesseract.js';
-
-// ... (rest of imports)
-
-// ... (inside component)
-
-  const analyzeImage = useCallback(async (imageData: string) => {
-    let result: ObjectScanResult | null = null;
-    
     try {
       const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
       
