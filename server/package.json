@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node dist/index.js",
     "build": "npx prisma generate && tsc",
-    "dev": "nodemon"
+    "dev": "npx prisma generate --schema=./prisma/schema.local.prisma && nodemon",
+    "migrate:local": "npx prisma migrate dev --schema=./prisma/schema.local.prisma"
   },
   "dependencies": {
     "@okta/jwt-verifier": "^4.0.1",
