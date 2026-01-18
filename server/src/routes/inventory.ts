@@ -1,10 +1,8 @@
 import { Router, Response, Request } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { CustomRequest, verifyToken } from '../middleware/auth';
 import prisma from '../lib/prisma';
 
 const router = Router();
-// const prisma = new PrismaClient(); // Removed local instance
 
 // Apply auth middleware to all inventory routes
 router.use(verifyToken);
@@ -27,9 +25,21 @@ const safeParse = (str: string | null | undefined): string[] => {
   }
 };
 
+// Helper for date parsing
+const safeDate = (dateVal: any): Date | null => {
+  if (!dateVal) return null;
+  const parsed = new Date(dateVal);
+  return isNaN(parsed.getTime()) ? null : parsed;
+};
+
 // GET all items for the logged-in user
 router.get('/', async (req: Request, res: Response) => {
   const customReq = req as unknown as CustomRequest;
+  if (!customReq.userId) {
+    res.status(401).json({ error: 'User ID missing' });
+    return;
+  }
+
   try {
     const items = await prisma.inventoryItem.findMany({
       where: { userId: customReq.userId }
@@ -49,15 +59,23 @@ router.get('/', async (req: Request, res: Response) => {
 // POST create new item
 router.post('/', async (req: Request, res: Response) => {
   const customReq = req as unknown as CustomRequest;
+  if (!customReq.userId) {
+    res.status(401).json({ error: 'User ID missing' });
+    return;
+  }
+
   try {
     const { photos, ...rest } = req.body;
+    
+    // Validate required fields if necessary or rely on Prisma
+    
     const newItem = await prisma.inventoryItem.create({
       data: {
         ...rest,
-        userId: customReq.userId!,
+        userId: customReq.userId,
         photos: JSON.stringify(photos || []),
         // Ensure dates are parsed correctly if sent as strings
-        expirationDate: req.body.expirationDate ? new Date(req.body.expirationDate) : null
+        expirationDate: safeDate(req.body.expirationDate)
       }
     });
     
@@ -78,6 +96,11 @@ router.put('/:id', async (req: Request, res: Response) => {
   const customReq = req as unknown as CustomRequest;
   const { id } = req.params;
   
+  if (!customReq.userId) {
+    res.status(401).json({ error: 'User ID missing' });
+    return;
+  }
+
   if (!id || typeof id !== 'string') {
     res.status(400).json({ error: 'Invalid ID' });
     return;
@@ -99,7 +122,7 @@ router.put('/:id', async (req: Request, res: Response) => {
       data: {
         ...updateData,
         photos: photos ? JSON.stringify(photos) : undefined,
-        expirationDate: req.body.expirationDate ? new Date(req.body.expirationDate) : null
+        expirationDate: safeDate(req.body.expirationDate)
       }
     });
 
@@ -118,6 +141,11 @@ router.delete('/:id', async (req: Request, res: Response) => {
   const customReq = req as unknown as CustomRequest;
   const { id } = req.params;
   
+  if (!customReq.userId) {
+     res.status(401).json({ error: 'User ID missing' });
+     return;
+  }
+
   if (!id || typeof id !== 'string') {
     res.status(400).json({ error: 'Invalid ID' });
     return;
