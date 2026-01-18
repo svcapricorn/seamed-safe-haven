@@ -4,6 +4,7 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Camera, Flashlight, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
+import { createWorker } from 'tesseract.js';
 import { 
     Dialog, 
     IconButton, 
@@ -156,62 +157,106 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
     // setIsAnalyzing(true); // Already set in captureImage
     let result: ObjectScanResult | null = null;
     
+import { createWorker } from 'tesseract.js';
+
+// ... (rest of imports)
+
+// ... (inside component)
+
+  const analyzeImage = useCallback(async (imageData: string) => {
+    let result: ObjectScanResult | null = null;
+    
     try {
       const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
       
       if (apiKey) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); 
+        // ... (OpenAI logic)
+         const controller = new AbortController();
+         const timeoutId = setTimeout(() => controller.abort(), 10000); 
+ 
+         const response = await fetch('https://api.openai.com/v1/chat/completions', {
+           method: 'POST',
+           headers: {
+             'Content-Type': 'application/json',
+             'Authorization': `Bearer ${apiKey}`
+           },
+           signal: controller.signal,
+           body: JSON.stringify({
+             model: "gpt-4o-mini",
+             messages: [
+               {
+                 role: "system",
+                 content: "You are a medical inventory assistant. Identify the medical supply item in the image by READING THE TEXT LABELS (OCR) and analyzing the packaging. Prioritize text found on the label (Brand, Chemical Name, Dosage) to determine the item 'name'. Return strictly valid JSON with no markdown formatting containing: 'name' (string), 'category' (one of: medications, first-aid, tools, diagnostic, ppe, other), and 'confidence' (number 0-1)."
+               },
+               {
+                 role: "user",
+                 content: [
+                   { type: "text", text: "Identify this medical item. Read all visible text on the packaging, bottle, or box to determine exactly what it is. Include dosage or specific type if visible." },
+                   { type: "image_url", image_url: { url: imageData } }
+                 ]
+               }
+             ],
+             max_tokens: 300
+           })
+         });
+         
+         clearTimeout(timeoutId);
+ 
+         const data = await response.json();
+         
+         if (data.choices && data.choices[0]?.message?.content) {
+           const content = data.choices[0].message.content.replace(/```json/g, '').replace(/```/g, '').trim();
+           try {
+             const parsed = JSON.parse(content);
+             if (parsed.name && parsed.category) {
+               result = {
+                 name: parsed.name,
+                 category: parsed.category,
+                 confidence: parsed.confidence || 0.85,
+                 image: imageData
+               };
+             }
+           } catch (e) {
+             console.error("Failed to parse AI response:", content);
+           }
+         }
+      } else {
+         console.warn("No OpenAI API Key found. Falling back to local OCR (Tesseract.js).");
+         const worker = await createWorker('eng');
+         const ret = await worker.recognize(imageData);
+         await worker.terminate();
 
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          signal: controller.signal,
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [
-              {
-                role: "system",
-                content: "You are a medical inventory assistant. Identify the medical supply item in the image by READING THE TEXT LABELS (OCR) and analyzing the packaging. Prioritize text found on the label (Brand, Chemical Name, Dosage) to determine the item 'name'. Return strictly valid JSON with no markdown formatting containing: 'name' (string), 'category' (one of: medications, first-aid, tools, diagnostic, ppe, other), and 'confidence' (number 0-1)."
-              },
-              {
-                role: "user",
-                content: [
-                  { type: "text", text: "Identify this medical item. Read all visible text on the packaging, bottle, or box to determine exactly what it is. Include dosage or specific type if visible." },
-                  { type: "image_url", image_url: { url: imageData } }
-                ]
-              }
-            ],
-            max_tokens: 300
-          })
-        });
-        
-        clearTimeout(timeoutId);
+         const text = ret.data.text.toLowerCase();
+         console.log("OCR Detected Text:", text);
 
-        const data = await response.json();
-        
-        if (data.choices && data.choices[0]?.message?.content) {
-          const content = data.choices[0].message.content.replace(/```json/g, '').replace(/```/g, '').trim();
-          try {
-            const parsed = JSON.parse(content);
-            if (parsed.name && parsed.category) {
-              result = {
-                name: parsed.name,
-                category: parsed.category,
-                confidence: parsed.confidence || 0.85,
+         // Simple keyword matching from the extracted text
+         const match = MEDICAL_SUPPLY_PATTERNS.find(p => 
+            p.keywords.some(k => text.includes(k)) || 
+            text.includes(p.name.toLowerCase())
+         );
+
+         if (match) {
+            result = {
+                name: match.name,
+                category: match.category,
+                confidence: 0.8, // Static confidence for regex match
                 image: imageData
-              };
             }
-          } catch (e) {
-            console.error("Failed to parse AI response:", content);
-          }
-        }
+         } else if (text.length > 5) {
+             // Fallback: Use the most prominent text lines as the name
+             const lines = ret.data.text.split('\n').filter(l => l.length > 3).slice(0, 2);
+             if (lines.length > 0) {
+                 result = {
+                     name: lines.join(' ').substring(0, 50),
+                     category: 'other',
+                     confidence: 0.5,
+                     image: imageData
+                 }
+             }
+         }
       }
     } catch (error) {
-       console.error("AI Analysis failed:", error);
+       console.error("Analysis failed:", error);
     }
 
     if (!result) {
