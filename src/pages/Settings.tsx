@@ -1,7 +1,7 @@
 // SeaMed Tracker - Settings Page
 // App settings and preferences
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   User, 
@@ -12,7 +12,8 @@ import {
   Info,
   ChevronRight,
   Anchor,
-  Sparkles
+  Sparkles,
+  Activity
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useInventory } from '@/context/InventoryContext';
@@ -20,9 +21,12 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { getFeatures, FEATURE_INFO } from '@/config/featureFlags';
+import { useOktaAuth } from '@okta/okta-react';
 
 export default function SettingsPage() {
   const { settings, exportToCSV, items, stats } = useInventory();
+  const { authState, oktaAuth } = useOktaAuth();
+  const [pingResult, setPingResult] = useState<string | null>(null);
   const features = getFeatures(settings.subscriptionTier);
 
   const handleExport = () => {
@@ -183,6 +187,70 @@ export default function SettingsPage() {
           description="Version 1.0.0"
           disabled
         />
+      </motion.section>
+
+      {/* Diagnostics */}
+      <motion.section
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.22 }}
+        className="space-y-2"
+      >
+        <h2 className="font-semibold text-foreground px-1 mb-3">Diagnostics</h2>
+        <div className="card-maritime p-4 space-y-4">
+             <div className="flex items-center gap-2">
+                 <Activity className="h-5 w-5 text-muted-foreground" />
+                 <span className="font-medium">Connection Status</span>
+             </div>
+             <div className="text-sm space-y-1">
+                 <div className="flex justify-between">
+                     <span className="text-muted-foreground">Okta Auth:</span>
+                     <span className={authState?.isAuthenticated ? "text-green-500 font-medium" : "text-red-500 font-medium"}>
+                        {authState?.isAuthenticated ? "Authenticated" : "Not Authenticated"}
+                     </span>
+                 </div>
+                 {authState?.isAuthenticated && (
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">User:</span>
+                        <span>{authState.idToken?.claims.name || authState.idToken?.claims.email}</span>
+                    </div>
+                 )}
+                 <div className="flex justify-between items-center pt-2">
+                     <span className="text-muted-foreground">Backend:</span>
+                     <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={async () => {
+                            setPingResult('Testing...');
+                            try {
+                                const token = oktaAuth.getAccessToken();
+                                const headers: any = {};
+                                if (token) headers['Authorization'] = `Bearer ${token}`;
+                                
+                                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/inventory';
+                                const res = await fetch(`${API_URL}/ping`, { headers });
+                                if (res.ok) {
+                                    const data = await res.json();
+                                    setPingResult(`Connected (User ID: ${data.userId})`);
+                                    toast({ title: "Success", description: "Backend connection verified" });
+                                } else {
+                                    setPingResult(`Error: ${res.status} ${res.statusText}`);
+                                }
+                            } catch (e: any) {
+                                setPingResult(`Failed: ${e.message}`);
+                            }
+                        }}
+                     >
+                        Test Connection
+                     </Button>
+                 </div>
+                 {pingResult && (
+                     <div className="p-2 bg-muted rounded text-xs break-all mt-2">
+                         {pingResult}
+                     </div>
+                 )}
+             </div>
+        </div>
       </motion.section>
 
       {/* Disclaimer */}

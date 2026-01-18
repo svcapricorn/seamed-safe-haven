@@ -65,16 +65,15 @@ router.post('/', async (req: Request, res: Response) => {
   }
 
   try {
-    const { photos, ...rest } = req.body;
-    
-    // Validate required fields if necessary or rely on Prisma
+    // Strip metadata that shouldn't be manually set or causes type errors (e.g. string dates)
+    // We allow 'id' to be passed if the client generated it (e.g. for optimistic UI)
+    const { photos, createdAt, updatedAt, userId: _userId, ...rest } = req.body;
     
     const newItem = await prisma.inventoryItem.create({
       data: {
         ...rest,
         userId: customReq.userId,
         photos: JSON.stringify(photos || []),
-        // Ensure dates are parsed correctly if sent as strings
         expirationDate: safeDate(req.body.expirationDate)
       }
     });
