@@ -4,14 +4,14 @@ import { oktaAuth } from '@/config/okta';
 
 // Helper to get headers with token
 const getHeaders = async () => {
-  if (import.meta.env.VITE_MOCK_AUTH === 'true') {
+  if (import.meta.env.VITE_MOCK_AUTH === 'true' || window.location.hostname === 'localhost') {
     return {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer dev-token',
       'x-dev-user-id': 'dev-user-123'
     };
   }
-
+  
   const token = oktaAuth.getAccessToken();
   return {
     'Content-Type': 'application/json',
@@ -19,7 +19,11 @@ const getHeaders = async () => {
   };
 };
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/inventory';
+// FORCE LOCALHOST for debugging if we are running locally
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_URL = isLocal ? 'http://localhost:3001/api/inventory' : (import.meta.env.VITE_API_URL || 'http://localhost:3001/api/inventory');
+
+console.log(`[Database] Using API_URL: ${API_URL}`);
 
 // Fallback Settings DB (Local only for now, or move to backend later)
 import Dexie, { type EntityTable } from 'dexie';
