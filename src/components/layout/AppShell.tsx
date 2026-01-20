@@ -53,7 +53,7 @@ export function AppShell() {
       <AppBar position="sticky" elevation={0} sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}>
         <Toolbar>
           <Anchor size={24} style={{ marginRight: 12 }} />
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
             SailMed
           </Typography>
           

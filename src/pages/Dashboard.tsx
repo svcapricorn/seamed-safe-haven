@@ -121,7 +121,7 @@ export default function Dashboard() {
       {/* Disclaimer */}
       <Box sx={{ textAlign: 'center', py: 2, maxWidth: 400, mx: 'auto' }}>
         <Typography variant="caption" color="text.secondary">
-          SailMed Tracker is an organizational tool only. It does not provide medical advice, 
+          SailMed is an organizational tool only. It does not provide medical advice, 
           diagnosis, or treatment recommendations.
         </Typography>
       </Box>

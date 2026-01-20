@@ -25,11 +25,13 @@ export default function AddItemPage() {
   }, [searchParams]);
 
   const handleBarcodeScan = (barcode: string) => {
+    console.log(`[AddItemPage] Received scanned barcode: ${barcode}`);
     setScannedBarcode(barcode);
     setShowBarcodeScanner(false);
   };
 
   const handleObjectIdentify = (result: ObjectScanResult) => {
+    console.log(`[AddItemPage] Received identified object from scan`, result);
     setIdentifiedObject(result);
     setShowObjectScanner(false);
   };

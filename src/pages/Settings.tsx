@@ -261,7 +261,7 @@ export default function SettingsPage() {
         className="text-center py-6"
       >
         <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-          SailMed Tracker is an organizational tool only. It does not provide 
+          SailMed Safe Haven is an organizational tool only. It does not provide 
           medical advice, diagnosis, or treatment recommendations. Always 
           consult qualified medical professionals for health-related decisions.
         </p>

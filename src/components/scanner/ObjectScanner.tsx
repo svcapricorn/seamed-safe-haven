@@ -96,6 +96,7 @@ export function ObjectScanner({ isOpen, onClose, onIdentify }: ObjectScannerProp
       const track = stream.getVideoTracks()[0];
       const capabilities = (track.getCapabilities && track.getCapabilities()) as any;
       setHasTorch(capabilities?.torch === true);
+      console.log(`[ObjectScanner] Camera started. Torch capability: ${capabilities?.torch === true}`);
 
       setIsInitializing(false);
     } catch (err) {

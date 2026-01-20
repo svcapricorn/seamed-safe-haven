@@ -71,20 +71,27 @@ export function BarcodeScanner({ isOpen, onClose, onScan }: BarcodeScannerProps)
                     device.label.toLowerCase().includes('rear')
         );
         const deviceId = backCamera?.deviceId || videoInputDevices[0].deviceId;
+        
+        console.log(`[BarcodeScanner] Using camera: ${deviceId} (${backCamera ? 'Back' : 'Default'})`);
 
         await reader.decodeFromVideoDevice(
           deviceId,
           videoRef.current!,
           (result, err) => {
             if (result) {
+              const text = result.getText();
+              console.log(`[BarcodeScanner] Scanned code: ${text}, Format: ${result.getBarcodeFormat()}`);
+              
               // Vibrate on successful scan if supported
               if ('vibrate' in navigator) {
                 navigator.vibrate(100);
               }
-              onScan(result.getText());
+              onScan(text);
               onClose();
             }
-            // Ignore NotFoundException
+            if (err && !(err instanceof NotFoundException)) {
+                console.warn('[BarcodeScanner] Decode error (ignoring NotFound):', err);
+            }
           }
         );
 
